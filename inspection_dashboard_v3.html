@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bus Inspection Dashboard — Makkah Bus Project</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e1a;--bg2:#0f1525;--bg3:#141b2d;
+  --card:#1a2235;--border:rgba(99,130,255,.12);--border2:rgba(99,130,255,.25);
+  --accent:#4f7cff;--accent2:#7c5cfc;
+  --green:#22d3a5;--amber:#f59e0b;--red:#f43f5e;--blue:#38bdf8;--purple:#a78bfa;
+  --text:#e8eaf0;--text2:#8892aa;--text3:#5a6580;
+  --ms:#4f7cff;--ma:#22d3a5;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
+
+/* ── Sidebar ── */
+.sidebar{position:fixed;top:0;right:0;width:220px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:100;}
+.logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+.logo-title{font-size:13px;font-weight:700;letter-spacing:.05em;}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.logo-ver{font-size:9px;color:var(--green);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+.nav{padding:14px 0;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border-right:2px solid transparent;}
+.nav-item:hover{background:rgba(79,124,255,.06);color:var(--text);}
+.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(79,124,255,.08);}
+.sidebar-user{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+
+/* ── Main ── */
+.main{margin-right:220px;min-height:100vh;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.page-title{font-size:15px;font-weight:600;}
+.badge-live{background:rgba(34,211,165,.12);border:1px solid rgba(34,211,165,.3);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;}
+.badge-live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.content{padding:22px 26px;}
+.page{display:none;}.page.active{display:block;}
+
+/* ── Upload ── */
+.upload-zone{border:2px dashed var(--border2);border-radius:16px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:20px;background:rgba(79,124,255,.03);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(79,124,255,.07);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-status{display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;align-items:center;gap:10px;font-size:12px;}
+.upload-status.show{display:flex;}
+
+/* ── KPI grid ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;transition:all .2s;}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.kpi-card::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;}
+.kpi-card.c1::before{background:var(--accent);}
+.kpi-card.c2::before{background:var(--green);}
+.kpi-card.c3::before{background:var(--red);}
+.kpi-card.c4::before{background:var(--amber);}
+.kpi-card.c5::before{background:var(--purple);}
+.kpi-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.kpi-val{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1;}
+.kpi-val.c1{color:var(--accent);}
+.kpi-val.c2{color:var(--green);}
+.kpi-val.c3{color:var(--red);}
+.kpi-val.c4{color:var(--amber);}
+.kpi-val.c5{color:var(--purple);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* ── Sections ── */
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:18px;}
+.sc-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sc-title{font-size:13px;font-weight:600;}
+.sc-body{padding:14px 16px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+
+/* ── Table ── */
+.dt{width:100%;border-collapse:collapse;}
+.dt th{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);}
+.dt td{padding:9px 12px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:rgba(79,124,255,.03);}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
+
+/* ── Bus type badge ── */
+.bus-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.bus-badge.ms{background:rgba(79,124,255,.12);color:var(--ms);}
+.bus-badge.ma{background:rgba(34,211,165,.12);color:var(--ma);}
+
+/* ── Evasion badge ── */
+.ev-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.ev-badge.high{background:rgba(244,63,94,.12);color:var(--red);}
+.ev-badge.mid{background:rgba(245,158,11,.12);color:var(--amber);}
+.ev-badge.low{background:rgba(34,211,165,.12);color:var(--green);}
+.ev-badge.none{background:rgba(255,255,255,.05);color:var(--text3);}
+
+/* ── Top 5 cards ── */
+.top-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:all .2s;cursor:default;}
+.top-card:hover{border-color:var(--border2);}
+.rank-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.rank-1{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;}
+.rank-2{background:rgba(148,163,184,.2);color:#94a3b8;}
+.rank-3{background:rgba(180,120,60,.2);color:#b47c3c;}
+.rank-n{background:rgba(79,124,255,.1);color:var(--accent);}
+.top-info{flex:1;}
+.top-name{font-size:13px;font-weight:600;}
+.top-id{font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.top-stats{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.top-stat{font-size:11px;color:var(--text2);}
+.top-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);text-align:left;}
+
+/* ── Bar ── */
+.bar-wrap{margin-bottom:10px;}
+.bar-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:12px;}
+.bar-track{height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+
+/* ── Slicer date picker ── */
+.slicer-wrap{margin-bottom:20px;}
+.slicer-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:10px;}
+.slicer-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.slicer-item{
+  padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;
+  border:1px solid var(--border);background:var(--bg3);color:var(--text2);
+  cursor:pointer;transition:all .18s;text-align:center;min-width:120px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.slicer-item:hover{border-color:var(--border2);color:var(--text);background:var(--card);}
+.slicer-item.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(79,124,255,.3);}
+.slicer-item.all-item{background:rgba(79,124,255,.08);border-color:rgba(79,124,255,.2);color:var(--accent);}
+.slicer-item.all-item.active{background:var(--accent);color:#fff;}
+.slicer-date{font-size:13px;font-weight:700;}
+.slicer-count{font-size:10px;opacity:.75;}
+
+/* ── Date filter ── */
+.date-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
+.dfbtn{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;font-family:inherit;}
+.dfbtn:hover{border-color:var(--border2);color:var(--text);}
+.dfbtn.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.search-box{flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:inherit;outline:none;transition:border-color .2s;text-align:right;}
+.search-box:focus{border-color:var(--accent);}
+.search-box::placeholder{color:var(--text3);}
+
+/* ── Date chip ── */
+.date-chip{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text2);}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:50px 20px;color:var(--text3);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+
+/* ── Summary strip ── */
+.sum-strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.sum-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:5px;}
+
+/* ── Evasion highlight ── */
+.ev-high-row td{background:rgba(244,63,94,.04)!important;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+@media(max-width:900px){.sidebar{display:none;}.main{margin-right:0;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.two-col,.three-col{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-title">⬡ Operations Hub</div>
+    <div class="logo-sub">Bus Inspection Module</div>
+    <div class="logo-ver">v1.0 — Ticket Inspection KPI</div>
+  </div>
+  <div class="nav">
+    <div class="nav-item active" onclick="showPage('dashboard')"><span style="width:20px;text-align:center;font-size:15px;">▦</span> لوحة التحكم</div>
+    <div class="nav-item" onclick="showPage('upload')"><span style="width:20px;text-align:center;font-size:15px;">⬆</span> رفع ملف الفحص</div>
+    <div class="nav-item" onclick="showPage('top5')"><span style="width:20px;text-align:center;font-size:15px;">★</span> أفضل أداء (فحص الحافلات)</div>
+    <div class="nav-item" onclick="showPage('records')"><span style="width:20px;text-align:center;font-size:15px;">◉</span> سجل الفحوصات</div>
+    <div class="nav-item" onclick="showPage('evasion')"><span style="width:20px;text-align:center;font-size:15px;">⚠</span> التهرب من التذاكر</div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-av">MN</div>
+    <div>
+      <div style="font-size:12px;font-weight:600;">Majid N. Alhashmy</div>
+      <div style="font-size:10px;color:var(--text3);">Operations Supervisor</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">لوحة التحكم — فحص الحافلات</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="lastFile" style="display:none;font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;"></span>
+      <div class="badge-live">LIVE</div>
+      <span style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;" id="todayDate"></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div id="dash-empty" class="empty">
+        <div class="empty-icon">🚌</div>
+        <div class="empty-title">لا توجد بيانات فحص بعد</div>
+        <div style="font-size:12px;margin-bottom:16px;">ارفع ملف Excel من صفحة "رفع ملف الفحص"</div>
+        <button onclick="showPage('upload')" style="background:var(--accent);border:none;color:#fff;padding:9px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">رفع ملف الفحص ←</button>
+      </div>
+      <div id="dash-data" style="display:none;">
+        <div class="sum-strip" id="sumStrip"></div>
+        <div class="kpi-grid">
+          <div class="kpi-card c1"><div class="kpi-label">إجمالي الفحوصات</div><div class="kpi-val c1" id="k-total">0</div><div class="kpi-sub">عملية فحص</div></div>
+          <div class="kpi-card c2"><div class="kpi-label">ركاب بتذاكر</div><div class="kpi-val c2" id="k-valid">0</div><div class="kpi-sub">راكب ملتزم</div></div>
+          <div class="kpi-card c3"><div class="kpi-label">ركاب بدون تذاكر</div><div class="kpi-val c3" id="k-noticket">0</div><div class="kpi-sub">راكب متهرب</div></div>
+          <div class="kpi-card c4"><div class="kpi-label">نسبة التهرب</div><div class="kpi-val c4" id="k-evasion">0%</div><div class="kpi-sub">Evasion Rate</div></div>
+          <div class="kpi-card c5"><div class="kpi-label">موظفين نشطين</div><div class="kpi-val c5" id="k-emp">0</div><div class="kpi-sub">مفتش في السجل</div></div>
+        </div>
+        <div class="two-col">
+          <div class="sc">
+            <div class="sc-head"><div class="sc-title">🏆 أفضل 5 موظفين — إجمالي الفحص</div></div>
+            <div class="sc-body" id="top5Body"></div>
+          </div>
+          <div class="sc">
+            <div class="sc-head"><div class="sc-title">📊 أداء حسب نوع الباص</div></div>
+            <div class="sc-body" id="busTypeBreakdown"></div>
+          </div>
+        </div>
+
+        <!-- ── 3 Charts Row ── -->
+        <div class="two-col" style="grid-template-columns:1.6fr 1fr;">
+          <!-- Line Chart: آخر 10 أيام -->
+          <div class="sc">
+            <div class="sc-head">
+              <div class="sc-title">📈 الفحوصات — آخر 10 أيام</div>
+              <span style="font-size:10px;color:var(--text3);">فحوصات يومية</span>
+            </div>
+            <div class="sc-body" style="padding:10px 14px;">
+              <canvas id="chartLine" height="140"></canvas>
+            </div>
+          </div>
+          <!-- Pie Chart: نسبة الركاب -->
+          <div class="sc">
+            <div class="sc-head">
+              <div class="sc-title">🥧 الركاب — بتذكرة vs بدون</div>
+            </div>
+            <div class="sc-body" style="display:flex;align-items:center;justify-content:center;padding:14px;">
+              <canvas id="chartPie" style="max-width:260px;max-height:260px;width:260px;height:260px;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bar Chart: المسارات -->
+        <div class="sc">
+          <div class="sc-head">
+            <div class="sc-title">🛣️ أعلى المسارات فحصاً</div>
+            <span style="font-size:10px;color:var(--text3);">Route Number — عدد الفحوصات</span>
+          </div>
+          <div class="sc-body" style="padding:10px 14px;">
+            <canvas id="chartRoutes" height="100"></canvas>
+          </div>
+        </div>
+
+        <div class="sc">
+          <div class="sc-head"><div class="sc-title">📅 الفحوصات حسب التاريخ</div></div>
+          <div class="sc-body" id="dateBreakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ UPLOAD ══ -->
+    <div class="page" id="page-upload">
+      <div class="upload-zone" id="dropZone">
+        <input type="file" accept=".xlsx,.xls" id="fileInput" onchange="handleFile(this.files[0])">
+        <div style="font-size:34px;margin-bottom:10px;">🚌</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px;">ارفع ملف فحص الحافلات</div>
+        <div style="font-size:12px;color:var(--text3);">اسحب الملف هنا أو اضغط للاختيار</div>
+        <div style="margin-top:10px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+          <span style="background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;">.xlsx</span>
+          <span style="background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;">SN · Date · Email · Name · ID · Bus Type · Bus No · Route · Valid · No Tickets · Total</span>
+        </div>
+      </div>
+      <div class="upload-status" id="uploadStatus">
+        <div style="font-size:18px;" id="statusIcon">✅</div>
+        <div><strong id="statusTitle" style="display:block;font-size:13px;margin-bottom:2px;"></strong><span id="statusSub" style="color:var(--text3);"></span></div>
+      </div>
+      <div class="sc">
+        <div class="sc-head"><div class="sc-title">📋 تنسيق الأعمدة المطلوبة</div></div>
+        <div class="sc-body">
+          <table class="dt">
+            <thead><tr><th>العمود</th><th>الاسم</th><th>مثال</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">A</td><td>SN</td><td class="mono">1</td></tr>
+              <tr><td class="mono">B</td><td>Date</td><td class="mono">45887 (Excel serial)</td></tr>
+              <tr><td class="mono">C</td><td>Email</td><td class="mono">B.Alhndi@mbco.sa</td></tr>
+              <tr><td class="mono">D</td><td>Name</td><td class="mono">Badia Alhndi</td></tr>
+              <tr><td class="mono">E</td><td>ID (الرقم الوظيفي)</td><td class="mono">12162</td></tr>
+              <tr><td class="mono">F</td><td>Bus Type</td><td><span class="bus-badge ms">MS</span> أو <span class="bus-badge ma">MA</span></td></tr>
+              <tr><td class="mono">G</td><td>Bus Number</td><td class="mono">1160</td></tr>
+              <tr><td class="mono">H</td><td>Route</td><td class="mono">2</td></tr>
+              <tr><td class="mono">I</td><td>Valid Tickets</td><td class="mono">10</td></tr>
+              <tr><td class="mono">J</td><td>No Tickets</td><td class="mono">1</td></tr>
+              <tr><td class="mono">K</td><td>Total Inspected</td><td class="mono">11</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TOP 5 ══ -->
+    <div class="page" id="page-top5">
+      <div id="top5-empty" class="empty"><div class="empty-icon">★</div><div class="empty-title">ارفع ملف الفحص أولاً</div></div>
+      <div id="top5-data" style="display:none;">
+        <!-- Slicer -->
+        <div class="sc" style="margin-bottom:18px;">
+          <div class="sc-head">
+            <div class="sc-title">📅 اختر الفترة الزمنية</div>
+            <span id="top5SlicerInfo" style="font-size:11px;color:var(--text3);"></span>
+          </div>
+          <div class="sc-body" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <select id="top5Slicer" onchange="setTop5DateFromSelect(this)"
+              style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;padding:10px 16px;outline:none;cursor:pointer;min-width:240px;">
+            </select>
+            <span id="top5SlicerSub" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;"></span>
+          </div>
+        </div>
+        <!-- Results -->
+        <div id="top5Grid"></div>
+      </div>
+    </div>
+
+    <!-- ══ RECORDS ══ -->
+    <div class="page" id="page-records">
+      <div id="rec-empty" class="empty"><div class="empty-icon">📋</div><div class="empty-title">ارفع ملف الفحص أولاً</div></div>
+      <div id="rec-data" style="display:none;">
+        <div class="date-filters">
+          <input class="search-box" type="text" placeholder="ابحث بالاسم أو الرقم أو رقم الباص..." id="recSearch" oninput="renderRecords()">
+          <select class="search-box" id="recDateFilter" onchange="renderRecords()" style="flex:none;width:auto;">
+            <option value="all">كل التواريخ</option>
+          </select>
+          <select class="search-box" id="recTypeFilter" onchange="renderRecords()" style="flex:none;width:auto;">
+            <option value="all">كل أنواع الباص</option>
+            <option value="MS">MS — Standard</option>
+            <option value="MA">MA — Articulated</option>
+          </select>
+        </div>
+        <div class="sc">
+          <div class="sc-head">
+            <div class="sc-title">سجل الفحوصات الكامل</div>
+            <span id="recCount" style="font-size:11px;color:var(--text3);"></span>
+          </div>
+          <div style="overflow-x:auto;">
+          <table class="dt" style="min-width:700px;">
+            <thead>
+              <tr>
+                <th style="min-width:110px;">التاريخ</th>
+                <th style="min-width:90px;">الرقم الوظيفي</th>
+                <th style="min-width:150px;">الموظف</th>
+                <th style="min-width:80px;">نوع الباص</th>
+                <th style="min-width:80px;">رقم الباص</th>
+                <th style="min-width:60px;">الخط</th>
+                <th style="min-width:70px;text-align:center;">بتذكرة</th>
+                <th style="min-width:80px;text-align:center;color:var(--red);">بدون تذكرة</th>
+                <th style="min-width:70px;text-align:center;">الإجمالي</th>
+                <th style="min-width:90px;text-align:center;">نسبة التهرب</th>
+              </tr>
+            </thead>
+            <tbody id="recBody"></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ EVASION ══ -->
+    <div class="page" id="page-evasion">
+      <div id="ev-empty" class="empty"><div class="empty-icon">⚠</div><div class="empty-title">ارفع ملف الفحص أولاً</div></div>
+      <div id="ev-data" style="display:none;">
+        <div style="margin-bottom:16px;padding:12px 16px;background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.2);border-radius:10px;font-size:12px;color:var(--text2);">
+          ⚡ يُعرض هنا كل سجل فحص فيه ركاب بدون تذاكر — مرتب من الأعلى تهرباً للأقل
+        </div>
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="kpi-card c3"><div class="kpi-label">سجلات فيها تهرب</div><div class="kpi-val c3" id="ev-count">0</div><div class="kpi-sub">من إجمالي الفحوصات</div></div>
+          <div class="kpi-card c4"><div class="kpi-label">نسبة التهرب الكلية</div><div class="kpi-val c4" id="ev-rate">0%</div><div class="kpi-sub">No Tickets ÷ Total</div></div>
+          <div class="kpi-card c2"><div class="kpi-label">أعلى تهرب في سجل واحد</div><div class="kpi-val c2" id="ev-max">0</div><div class="kpi-sub">ركاب بدون تذكرة</div></div>
+          <div class="kpi-card c5"><div class="kpi-label">الباص الأكثر تهرباً</div><div class="kpi-val c5" id="ev-bus" style="font-size:18px;">—</div><div class="kpi-sub">Bus Number</div></div>
+        </div>
+        <div class="sc">
+          <div class="sc-head">
+            <div class="sc-title">⚠ سجلات التهرب — مرتبة تنازلياً</div>
+            <span id="ev-table-count" style="font-size:11px;color:var(--text3);"></span>
+          </div>
+          <table class="dt">
+            <thead>
+              <tr><th>التاريخ</th><th>الرقم الوظيفي</th><th>الموظف</th><th>نوع الباص</th><th>رقم الباص</th><th>الخط</th><th>بتذكرة</th><th style="color:var(--red);">بدون تذكرة</th><th>الإجمالي</th><th>نسبة التهرب</th></tr>
+            </thead>
+            <tbody id="evBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── State ──
+let inspData = [];
+let top5DateFilter = 'all';
+
+// ── Helpers ──
+function excelDateToStr(serial) {
+  if (!serial || isNaN(serial)) return String(serial)||'—';
+  const d = new Date((serial-25569)*86400*1000);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function excelDateToKey(serial) {
+  if (!serial||isNaN(serial)) return String(serial);
+  const d = new Date((serial-25569)*86400*1000);
+  return d.toISOString().split('T')[0];
+}
+function evClass(noTix,total) {
+  if(!total) return 'none';
+  const r=noTix/total;
+  if(r>=0.3) return 'high';
+  if(r>=0.1) return 'mid';
+  if(r>0) return 'low';
+  return 'none';
+}
+function evLabel(noTix,total) {
+  if(!total||!noTix) return `<span class="ev-badge none">0%</span>`;
+  const r=Math.round(noTix/total*100);
+  const cls=evClass(noTix,total);
+  return `<span class="ev-badge ${cls}">${r}%</span>`;
+}
+function busBadge(t){ return `<span class="bus-badge ${(t||'').toLowerCase()}">${t||'—'}</span>`; }
+
+// ── Nav ──
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const titles={dashboard:'لوحة التحكم — فحص الحافلات',upload:'رفع ملف الفحص',top5:'أفضل أداء — فحص الحافلات',records:'سجل الفحوصات',evasion:'تحليل التهرب من التذاكر'};
+  document.getElementById('pageTitle').textContent=titles[p]||p;
+  const pages=['dashboard','upload','top5','records','evasion'];
+  const idx=pages.indexOf(p);
+  if(idx>=0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
+  if(p==='records') renderRecords();
+  if(p==='top5') renderTop5();
+  if(p==='evasion') renderEvasion();
+}
+
+// ── File Upload ──
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0]);});
+
+function handleFile(file){
+  if(!file) return;
+  const st=document.getElementById('uploadStatus');
+  st.className='upload-status show';
+  document.getElementById('statusIcon').textContent='⏳';
+  document.getElementById('statusTitle').textContent='جاري قراءة الملف...';
+  document.getElementById('statusSub').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      const data=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];
+        if(!r||r.length<10) continue;
+        const noT=Number(r[9])||0;
+        const total=Number(r[10])||0;
+        const valid=Number(r[8])||0;
+        data.push({
+          sn:r[0],date:r[1],email:r[2],name:r[3],
+          id:r[4],busType:r[5],busNo:r[6],route:r[7],
+          valid,noTickets:noT,total,
+          evasionRate: total>0?noT/total:0
+        });
+      }
+      if(!data.length) throw new Error('الملف فارغ أو التنسيق غير صحيح');
+      inspData=data;
+      document.getElementById('statusIcon').textContent='✅';
+      document.getElementById('statusTitle').textContent=`تم رفع الملف — ${data.length} سجل فحص`;
+      document.getElementById('statusSub').textContent=`${file.name} · ${new Date().toLocaleTimeString('en-SA')}`;
+      document.getElementById('lastFile').style.display='block';
+      document.getElementById('lastFile').textContent=file.name;
+      processData();
+    }catch(err){
+      document.getElementById('statusIcon').textContent='❌';
+      document.getElementById('statusTitle').textContent='خطأ في قراءة الملف';
+      document.getElementById('statusSub').textContent=err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Process ──
+function processData(){
+  const D=inspData;
+  const totalInsp=D.length;
+  const totalValid=D.reduce((s,r)=>s+r.valid,0);
+  const totalNoTix=D.reduce((s,r)=>s+r.noTickets,0);
+  const totalPassengers=D.reduce((s,r)=>s+r.total,0);
+  const evasionRate=totalPassengers>0?((totalNoTix/totalPassengers)*100).toFixed(1)+'%':'0%';
+  const uniqueEmps=new Set(D.map(r=>r.id)).size;
+
+  document.getElementById('k-total').textContent=totalInsp.toLocaleString();
+  document.getElementById('k-valid').textContent=totalValid.toLocaleString();
+  document.getElementById('k-noticket').textContent=totalNoTix.toLocaleString();
+  document.getElementById('k-evasion').textContent=evasionRate;
+  document.getElementById('k-emp').textContent=uniqueEmps;
+
+  // Summary strip
+  const dates=[...new Set(D.map(r=>r.date))];
+  const msCount=D.filter(r=>(r.busType||'').toUpperCase()==='MS').length;
+  const maCount=D.filter(r=>(r.busType||'').toUpperCase()==='MA').length;
+  document.getElementById('sumStrip').innerHTML=`
+    <div class="sum-chip" style="background:rgba(255,255,255,.05);border:1px solid var(--border);">📅 ${dates.length} يوم</div>
+    <div class="sum-chip" style="background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--ms);">MS: ${msCount} فحص</div>
+    <div class="sum-chip" style="background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.2);color:var(--ma);">MA: ${maCount} فحص</div>
+    <div class="sum-chip" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:var(--red);">⚠ ${totalNoTix} بدون تذكرة</div>
+  `;
+
+  // Top 5
+  buildTop5(D,'all');
+
+  // Bus type breakdown
+  const msTotal=D.filter(r=>(r.busType||'').toUpperCase()==='MS').reduce((s,r)=>s+r.total,0);
+  const msNoTix=D.filter(r=>(r.busType||'').toUpperCase()==='MS').reduce((s,r)=>s+r.noTickets,0);
+  const maTotal=D.filter(r=>(r.busType||'').toUpperCase()==='MA').reduce((s,r)=>s+r.total,0);
+  const maNoTix=D.filter(r=>(r.busType||'').toUpperCase()==='MA').reduce((s,r)=>s+r.noTickets,0);
+  const maxT=Math.max(D.filter(r=>(r.busType||'').toUpperCase()==='MS').length, D.filter(r=>(r.busType||'').toUpperCase()==='MA').length,1);
+  document.getElementById('busTypeBreakdown').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div style="background:var(--bg3);border:1px solid rgba(79,124,255,.2);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">MS — Standard Bus</div>
+        <div style="font-size:22px;font-weight:700;color:var(--ms);font-family:'IBM Plex Mono',monospace;">${msCount}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;">فحص · ${msTotal} راكب · ${msNoTix} بدون تذكرة</div>
+        <div style="font-size:12px;color:var(--amber);font-weight:600;margin-top:4px;">${msTotal>0?((msNoTix/msTotal)*100).toFixed(1):'0'}% تهرب</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid rgba(34,211,165,.2);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">MA — Articulated Bus</div>
+        <div style="font-size:22px;font-weight:700;color:var(--ma);font-family:'IBM Plex Mono',monospace;">${maCount}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;">فحص · ${maTotal} راكب · ${maNoTix} بدون تذكرة</div>
+        <div style="font-size:12px;color:var(--amber);font-weight:600;margin-top:4px;">${maTotal>0?((maNoTix/maTotal)*100).toFixed(1):'0'}% تهرب</div>
+      </div>
+    </div>
+  `;
+
+  // Date breakdown
+  const byDate={};
+  D.forEach(r=>{
+    const dk=r.date;
+    if(!byDate[dk]) byDate[dk]={date:r.date,count:0,total:0,noTix:0};
+    byDate[dk].count++;
+    byDate[dk].total+=r.total;
+    byDate[dk].noTix+=r.noTickets;
+  });
+  const dateList=Object.values(byDate).sort((a,b)=>a.date-b.date);
+  const maxC=Math.max(...dateList.map(x=>x.count),1);
+  document.getElementById('dateBreakdown').innerHTML=dateList.map(d=>`
+    <div class="bar-wrap">
+      <div class="bar-label">
+        <span><span class="date-chip">${excelDateToStr(d.date)}</span> <span style="font-size:11px;color:var(--text3);">${d.count} فحص · ${d.total} راكب</span></span>
+        <span style="color:${d.noTix>0?'var(--red)':'var(--green)'};font-size:11px;font-weight:600;">${d.noTix} بدون تذكرة (${d.total>0?((d.noTix/d.total)*100).toFixed(1):'0'}%)</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${(d.count/maxC)*100}%;background:${d.noTix>0?'var(--accent)':'var(--green)'};"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Populate date filter
+  const sel=document.getElementById('recDateFilter');
+  sel.innerHTML='<option value="all">كل التواريخ</option>';
+  dateList.forEach(d=>{
+    const opt=document.createElement('option');
+    opt.value=d.date; opt.textContent=excelDateToStr(d.date);
+    sel.appendChild(opt);
+  });
+
+  // Build date dropdown for top5
+  const byDate2={};
+  D.forEach(r=>{ byDate2[r.date]=(byDate2[r.date]||0)+1; });
+  const dateList2=Object.keys(byDate2).map(Number).sort((a,b)=>a-b);
+  const top5Sel=document.getElementById('top5Slicer');
+  top5Sel.innerHTML=`<option value="all">📊 الكل — جميع التواريخ (${D.length} فحص)</option>`
+    +dateList2.map(dk=>`<option value="${dk}">${excelDateToStr(dk)} — ${byDate2[dk]} فحص</option>`).join('');
+  document.getElementById('top5SlicerInfo').textContent=`${dateList2.length} يوم في السجل`;
+  document.getElementById('top5SlicerSub').textContent=`إجمالي: ${D.length} فحص`;
+
+  // ── Build Charts ──
+  buildCharts(D);
+
+  // Show data
+  ['dash','top5','rec','ev'].forEach(p=>{
+    const el=document.getElementById(p+'-empty');
+    const dl=document.getElementById(p+'-data');
+    if(el) el.style.display='none';
+    if(dl) dl.style.display='block';
+  });
+}
+
+// Chart instances (destroy before re-render)
+let chartLine=null, chartPie=null, chartRoutes=null;
+
+function buildCharts(D) {
+  const cDefaults = {
+    color:'rgba(232,234,240,0.75)',
+    font:{family:"'IBM Plex Sans Arabic', sans-serif", size:11},
+  };
+  Chart.defaults.color = cDefaults.color;
+  Chart.defaults.font  = cDefaults.font;
+
+  // ── 1. Line Chart: آخر 10 أيام ──
+  const byDate={};
+  D.forEach(r=>{
+    const k=r.date;
+    if(!byDate[k]) byDate[k]={cnt:0,noTix:0,pax:0};
+    byDate[k].cnt++; byDate[k].noTix+=r.noTickets; byDate[k].pax+=r.total;
+  });
+  const last10 = Object.entries(byDate)
+    .sort((a,b)=>a[0]-b[0]).slice(-10);
+  const lineLabels = last10.map(([dk])=>excelDateToStr(Number(dk)));
+  const lineCnt    = last10.map(([,v])=>v.cnt);
+  const lineNoTix  = last10.map(([,v])=>v.noTix);
+
+  if(chartLine) chartLine.destroy();
+  chartLine = new Chart(document.getElementById('chartLine'), {
+    type:'line',
+    data:{
+      labels: lineLabels,
+      datasets:[
+        {
+          label:'عدد الفحوصات',
+          data: lineCnt,
+          borderColor:'#4f7cff',
+          backgroundColor:'rgba(79,124,255,.12)',
+          fill:true, tension:.4,
+          pointBackgroundColor:'#4f7cff',
+          pointRadius:4, pointHoverRadius:6,
+          borderWidth:2,
+        },
+        {
+          label:'بدون تذكرة',
+          data: lineNoTix,
+          borderColor:'#f43f5e',
+          backgroundColor:'rgba(244,63,94,.08)',
+          fill:true, tension:.4,
+          pointBackgroundColor:'#f43f5e',
+          pointRadius:4, pointHoverRadius:6,
+          borderWidth:2,
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top',labels:{boxWidth:10,padding:14,color:'#8892aa'}},
+        tooltip:{
+          backgroundColor:'#1a2235',
+          borderColor:'rgba(99,130,255,.25)',
+          borderWidth:1,
+          titleColor:'#e8eaf0',
+          bodyColor:'#8892aa',
+          padding:10,
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580',maxRotation:30}},
+        y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}
+      }
+    }
+  });
+
+  // ── 2. Pie Chart: بتذكرة vs بدون ──
+  const totValid  = D.reduce((s,r)=>s+r.valid,0);
+  const totNoTix  = D.reduce((s,r)=>s+r.noTickets,0);
+  if(chartPie) chartPie.destroy();
+  chartPie = new Chart(document.getElementById('chartPie'), {
+    type:'doughnut',
+    data:{
+      labels:['بتذكرة ✓','بدون تذكرة ✗'],
+      datasets:[{
+        data:[totValid, totNoTix],
+        backgroundColor:['rgba(34,211,165,.8)','rgba(244,63,94,.8)'],
+        borderColor:['#22d3a5','#f43f5e'],
+        borderWidth:2,
+        hoverOffset:6,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      cutout:'65%',
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:10,padding:12,color:'#8892aa'}},
+        tooltip:{
+          backgroundColor:'#1a2235',
+          borderColor:'rgba(99,130,255,.25)',
+          borderWidth:1,
+          titleColor:'#e8eaf0',
+          bodyColor:'#8892aa',
+          callbacks:{
+            label:ctx=>{
+              const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+              const pct=total>0?((ctx.raw/total)*100).toFixed(1):'0';
+              return ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ── 3. Bar Chart: المسارات ──
+  const byRoute={};
+  D.forEach(r=>{
+    const k='خط '+r.route;
+    if(!byRoute[k]) byRoute[k]={cnt:0,noTix:0};
+    byRoute[k].cnt++; byRoute[k].noTix+=r.noTickets;
+  });
+  const routeSorted = Object.entries(byRoute).sort((a,b)=>b[1].cnt-a[1].cnt);
+  const routeLabels = routeSorted.map(([k])=>k);
+  const routeCnt    = routeSorted.map(([,v])=>v.cnt);
+  const routeNoTix  = routeSorted.map(([,v])=>v.noTix);
+
+  if(chartRoutes) chartRoutes.destroy();
+  chartRoutes = new Chart(document.getElementById('chartRoutes'), {
+    type:'bar',
+    data:{
+      labels: routeLabels,
+      datasets:[
+        {
+          label:'عدد الفحوصات',
+          data: routeCnt,
+          backgroundColor:'rgba(79,124,255,.7)',
+          borderColor:'#4f7cff',
+          borderWidth:1,
+          borderRadius:6,
+          borderSkipped:false,
+        },
+        {
+          label:'بدون تذكرة',
+          data: routeNoTix,
+          backgroundColor:'rgba(244,63,94,.65)',
+          borderColor:'#f43f5e',
+          borderWidth:1,
+          borderRadius:6,
+          borderSkipped:false,
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top',labels:{boxWidth:10,padding:14,color:'#8892aa'}},
+        tooltip:{
+          backgroundColor:'#1a2235',
+          borderColor:'rgba(99,130,255,.25)',
+          borderWidth:1,
+          titleColor:'#e8eaf0',
+          bodyColor:'#8892aa',
+          padding:10,
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'}},
+        y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+// ── Top 5 ──
+function buildTop5(data, dateFilter){
+  const D= dateFilter==='all'? data : data.filter(r=>String(r.date)===String(dateFilter));
+  const empMap={};
+  D.forEach(r=>{
+    if(!empMap[r.id]) empMap[r.id]={id:r.id,name:r.name,inspections:0,totalPax:0,noTix:0,valid:0};
+    empMap[r.id].inspections++;
+    empMap[r.id].totalPax+=r.total;
+    empMap[r.id].noTix+=r.noTickets;
+    empMap[r.id].valid+=r.valid;
+  });
+  const sorted=Object.values(empMap).sort((a,b)=>b.inspections-a.inspections);
+  const top5=sorted.slice(0,5);
+  const maxI=top5[0]?.inspections||1;
+
+  // Dashboard top5
+  document.getElementById('top5Body').innerHTML=top5.map((e,i)=>{
+    const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    const evR=e.totalPax>0?((e.noTix/e.totalPax)*100).toFixed(1):'0';
+    return `<div class="top-card">
+      <div class="rank-badge ${rankClass}">${i+1}</div>
+      <div class="top-info">
+        <div class="top-name">${e.name}</div>
+        <div class="top-id">#${e.id}</div>
+        <div class="top-stats">
+          <span class="top-stat">🚌 ${e.inspections} فحص</span>
+          <span class="top-stat">👥 ${e.totalPax} راكب</span>
+          <span class="top-stat" style="color:${e.noTix>0?'var(--amber)':'var(--green)'};">⚠ ${e.noTix} بدون تذكرة (${evR}%)</span>
+        </div>
+      </div>
+      <div class="top-val">${e.inspections}</div>
+    </div>`;
+  }).join('');
+
+  // Full top5 page grid
+  const allSorted=Object.values(empMap).sort((a,b)=>b.inspections-a.inspections);
+  const mxI=allSorted[0]?.inspections||1;
+  document.getElementById('top5Grid').innerHTML=`
+    <div class="sc" style="grid-column:1/-1;">
+      <div class="sc-head"><div class="sc-title">🏆 ترتيب جميع الموظفين — ${D.length} فحص في الفترة المحددة</div></div>
+      <div class="sc-body">
+        ${allSorted.map((e,i)=>{
+          const evR=e.totalPax>0?((e.noTix/e.totalPax)*100).toFixed(1):'0';
+          const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+          return `<div class="top-card">
+            <div class="rank-badge ${rankClass}">${i+1}</div>
+            <div class="top-info" style="flex:1;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div class="top-name">${e.name}</div>
+                  <div class="top-id">#${e.id}</div>
+                </div>
+                <div style="text-align:left;font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);">${e.inspections}</div>
+              </div>
+              <div style="margin-top:8px;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                  <span>👥 ${e.totalPax} راكب إجمالي · ✓ ${e.valid} · ⚠ ${e.noTix} بدون تذكرة · ${evR}% تهرب</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:${(e.inspections/mxI)*100}%;background:${i===0?'var(--amber)':i<3?'var(--accent)':'var(--accent2)'};"></div></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function setTop5DateFromSelect(sel){
+  const val = sel.value;
+  top5DateFilter = val==='all' ? 'all' : Number(val);
+  const D = top5DateFilter==='all' ? inspData : inspData.filter(r=>r.date==top5DateFilter);
+  document.getElementById('top5SlicerSub').textContent =
+    top5DateFilter==='all'
+      ? `إجمالي: ${inspData.length} فحص`
+      : `${D.length} فحص في هذا اليوم`;
+  buildTop5(inspData, top5DateFilter);
+}
+
+function setTop5Date(dateVal){ top5DateFilter=dateVal; buildTop5(inspData,dateVal); }
+function renderTop5(){ buildTop5(inspData, top5DateFilter); }
+
+// ── Records ──
+function renderRecords(){
+  const q=(document.getElementById('recSearch')?.value||'').toLowerCase();
+  const dateF=document.getElementById('recDateFilter')?.value||'all';
+  const typeF=document.getElementById('recTypeFilter')?.value||'all';
+  let list=inspData;
+  if(dateF!=='all') list=list.filter(r=>String(r.date)===String(dateF));
+  if(typeF!=='all') list=list.filter(r=>(r.busType||'').toUpperCase()===typeF);
+  if(q) list=list.filter(r=>(r.name||'').toLowerCase().includes(q)||String(r.id).includes(q)||String(r.busNo).includes(q));
+  document.getElementById('recCount').textContent=`${list.length} سجل`;
+  document.getElementById('recBody').innerHTML=list.map((r,i)=>{
+    const cls=r.noTickets>0?'ev-high-row':'';
+    return `<tr class="${cls}">
+      <td><span class="date-chip">${excelDateToStr(r.date)}</span></td>
+      <td class="mono">${r.id}</td>
+      <td style="font-weight:500;">${r.name}</td>
+      <td>${busBadge(r.busType)}</td>
+      <td class="mono">${r.busNo}</td>
+      <td class="mono" style="text-align:center;">${r.route}</td>
+      <td style="color:var(--green);font-family:'IBM Plex Mono',monospace;text-align:center;">${r.valid}</td>
+      <td style="color:${r.noTickets>0?'var(--red)':'var(--text3)'};font-family:'IBM Plex Mono',monospace;font-weight:${r.noTickets>0?'700':'400'};text-align:center;">${r.noTickets}</td>
+      <td class="mono" style="text-align:center;">${r.total}</td>
+      <td style="text-align:center;">${evLabel(r.noTickets,r.total)}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text3);">لا توجد نتائج</td></tr>';
+}
+
+// ── Evasion ──
+function renderEvasion(){
+  const evList=inspData.filter(r=>r.noTickets>0).sort((a,b)=>b.noTickets-a.noTickets);
+  const totalPax=inspData.reduce((s,r)=>s+r.total,0);
+  const totalNoTix=inspData.reduce((s,r)=>s+r.noTickets,0);
+  const maxNoTix=evList[0]?.noTickets||0;
+  // Most evaded bus
+  const busMap={};
+  inspData.forEach(r=>{if(r.noTickets>0){busMap[r.busNo]=(busMap[r.busNo]||0)+r.noTickets;}});
+  const topBus=Object.entries(busMap).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('ev-count').textContent=evList.length;
+  document.getElementById('ev-rate').textContent=totalPax>0?((totalNoTix/totalPax)*100).toFixed(1)+'%':'0%';
+  document.getElementById('ev-max').textContent=maxNoTix;
+  document.getElementById('ev-bus').textContent=topBus?topBus[0]:'—';
+  document.getElementById('ev-table-count').textContent=`${evList.length} سجل فيه تهرب`;
+
+  document.getElementById('evBody').innerHTML=evList.map(r=>`
+    <tr class="ev-high-row">
+      <td><span class="date-chip">${excelDateToStr(r.date)}</span></td>
+      <td class="mono">${r.id}</td>
+      <td style="font-weight:500;">${r.name}</td>
+      <td>${busBadge(r.busType)}</td>
+      <td class="mono" style="font-weight:600;">${r.busNo}</td>
+      <td class="mono">${r.route}</td>
+      <td style="color:var(--green);font-family:'IBM Plex Mono',monospace;">${r.valid}</td>
+      <td style="color:var(--red);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;">${r.noTickets}</td>
+      <td class="mono">${r.total}</td>
+      <td>${evLabel(r.noTickets,r.total)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Init ──
+document.getElementById('todayDate').textContent=
+  new Date().toLocaleDateString('en-SA',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+</script>
+</body>
+</html>

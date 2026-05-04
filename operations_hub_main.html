@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operations Hub — Makkah Bus Project</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#070c18;--bg2:#0b1120;--bg3:#0f1729;--card:#121a2e;--card2:#172035;
+  --border:rgba(82,119,255,.1);--border2:rgba(82,119,255,.22);--border3:rgba(82,119,255,.35);
+  --accent:#5277ff;--accent2:#8b5cf6;--accent3:#06d6a0;
+  --green:#06d6a0;--amber:#fbbf24;--red:#f43f5e;--blue:#38bdf8;--purple:#a78bfa;
+  --text:#eef0f7;--text2:#7c88a8;--text3:#3d4d6b;
+  --sb-w:72px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;direction:rtl;display:flex;}
+
+/* ── Sidebar ── */
+.sb{
+  width:var(--sb-w);height:100vh;background:var(--bg2);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 0;gap:4px;flex-shrink:0;z-index:100;
+  position:relative;
+}
+.sb-logo{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;margin-bottom:12px;flex-shrink:0;
+  box-shadow:0 4px 20px rgba(82,119,255,.3);
+}
+.sb-item{
+  width:52px;height:52px;border-radius:14px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  transition:all .2s;color:var(--text3);border:1px solid transparent;
+  position:relative;
+}
+.sb-item:hover{background:rgba(82,119,255,.08);color:var(--text2);border-color:var(--border);}
+.sb-item.active{background:rgba(82,119,255,.14);color:var(--accent);border-color:var(--border2);}
+.sb-item .icon{font-size:20px;line-height:1;}
+.sb-item .lbl{font-size:8px;font-weight:600;letter-spacing:.02em;text-align:center;line-height:1.2;}
+.sb-sep{width:36px;height:1px;background:var(--border);margin:6px 0;flex-shrink:0;}
+.sb-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.sb-user{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;cursor:pointer;
+  border:2px solid var(--border2);
+}
+
+/* Tooltip */
+.sb-item::after{
+  content:attr(data-tip);
+  position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+  background:var(--card2);border:1px solid var(--border2);color:var(--text);
+  font-size:11px;font-weight:600;padding:5px 10px;border-radius:8px;
+  white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;
+  font-family:'IBM Plex Sans Arabic',sans-serif;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.sb-item:hover::after{opacity:1;}
+
+/* ── Main area ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── Topbar ── */
+.topbar{
+  height:52px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0;
+}
+.topbar-title{font-size:14px;font-weight:700;letter-spacing:.02em;}
+.topbar-sub{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.topbar-right{margin-right:auto;display:flex;align-items:center;gap:10px;}
+.live-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);
+  color:var(--green);font-size:10px;font-weight:700;
+  padding:3px 10px;border-radius:20px;letter-spacing:.04em;
+}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.time-chip{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+
+/* ── Content ── */
+.content{flex:1;overflow:hidden;position:relative;}
+
+/* ── Dashboard page ── */
+.dash-page{height:100%;overflow-y:auto;padding:24px;}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.kpi{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px 20px;position:relative;overflow:hidden;cursor:default;
+  transition:all .2s;
+}
+.kpi:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3);}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;border-radius:0 14px 14px 0;}
+.kpi.a::before{background:linear-gradient(180deg,var(--accent),var(--accent2));}
+.kpi.b::before{background:linear-gradient(180deg,var(--green),#059669);}
+.kpi.c::before{background:linear-gradient(180deg,var(--amber),#d97706);}
+.kpi.d::before{background:linear-gradient(180deg,var(--red),#be185d);}
+.kpi-lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.kpi-val{font-size:30px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1;}
+.kpi.a .kpi-val{color:var(--accent);}
+.kpi.b .kpi-val{color:var(--green);}
+.kpi.c .kpi-val{color:var(--amber);}
+.kpi.d .kpi-val{color:var(--red);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:5px;}
+.kpi-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:32px;opacity:.07;}
+
+/* Module cards */
+.modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
+.mod-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:10px;
+}
+.mod-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;border-radius:14px;}
+.mod-card.blue::before{background:radial-gradient(circle at 20% 50%,rgba(82,119,255,.08),transparent 60%);}
+.mod-card.green::before{background:radial-gradient(circle at 20% 50%,rgba(6,214,160,.08),transparent 60%);}
+.mod-card.amber::before{background:radial-gradient(circle at 20% 50%,rgba(251,191,36,.08),transparent 60%);}
+.mod-card.purple::before{background:radial-gradient(circle at 20% 50%,rgba(139,92,246,.08),transparent 60%);}
+.mod-card:hover::before{opacity:1;}
+.mod-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.35);}
+.mod-card.blue:hover{border-color:rgba(82,119,255,.35);}
+.mod-card.green:hover{border-color:rgba(6,214,160,.35);}
+.mod-card.amber:hover{border-color:rgba(251,191,36,.35);}
+.mod-card.purple:hover{border-color:rgba(139,92,246,.35);}
+.mod-header{display:flex;align-items:center;gap:12px;}
+.mod-icon{
+  width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.blue .mod-icon{background:rgba(82,119,255,.15);}
+.green .mod-icon{background:rgba(6,214,160,.15);}
+.amber .mod-icon{background:rgba(251,191,36,.15);}
+.purple .mod-icon{background:rgba(139,92,246,.15);}
+.mod-name{font-size:14px;font-weight:700;}
+.mod-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.mod-stats{display:flex;gap:16px;padding-top:10px;border-top:1px solid var(--border);}
+.mod-stat{font-size:11px;color:var(--text2);}
+.mod-stat strong{color:var(--text);font-family:'IBM Plex Mono',monospace;}
+.mod-arrow{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  font-size:18px;color:var(--text3);transition:all .2s;
+}
+.mod-card:hover .mod-arrow{color:var(--text);left:14px;}
+.open-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(82,119,255,.1);border:1px solid rgba(82,119,255,.2);
+  color:var(--accent);font-size:11px;font-weight:600;padding:5px 12px;
+  border-radius:8px;cursor:pointer;font-family:inherit;transition:all .15s;
+  margin-top:auto;width:fit-content;
+}
+.open-btn:hover{background:var(--accent);color:#fff;}
+
+/* Activity strip */
+.activity{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;}
+.act-title{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;}
+.act-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.act-item:last-child{border-bottom:none;}
+.act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.act-dot.blue{background:var(--accent);}
+.act-dot.green{background:var(--green);}
+.act-dot.amber{background:var(--amber);}
+.act-dot.red{background:var(--red);}
+.act-time{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-right:auto;}
+
+/* ── Module iframe view ── */
+.module-view{
+  height:100%;display:none;flex-direction:column;
+}
+.module-view.active{display:flex;}
+.module-topbar{
+  height:44px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;
+}
+.back-btn{
+  background:var(--bg3);border:1px solid var(--border);color:var(--text2);
+  font-size:12px;font-weight:600;padding:5px 12px;border-radius:8px;
+  cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;
+  transition:all .15s;
+}
+.back-btn:hover{border-color:var(--border2);color:var(--text);}
+.module-name-bar{font-size:13px;font-weight:600;}
+.module-iframe{flex:1;border:none;width:100%;background:var(--bg);}
+
+/* ── Welcome/header ── */
+.welcome-strip{
+  background:linear-gradient(135deg,rgba(82,119,255,.08),rgba(139,92,246,.06));
+  border:1px solid var(--border2);border-radius:14px;padding:18px 22px;
+  margin-bottom:22px;display:flex;align-items:center;gap:16px;
+}
+.welcome-avatar{
+  width:48px;height:48px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;
+}
+.welcome-text h2{font-size:16px;font-weight:700;margin-bottom:3px;}
+.welcome-text p{font-size:12px;color:var(--text2);}
+.welcome-date{margin-right:auto;text-align:left;font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+
+/* ── Violations embedded styles ── */
+.vnav-btn{background:rgba(255,255,255,.04);border:1px solid rgba(99,130,255,.15);color:#7c88a8;font-size:11px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.vnav-btn:hover{color:#e8eaf0;border-color:rgba(99,130,255,.3);}
+.vnav-btn.active{background:rgba(79,124,255,.15);border-color:rgba(79,124,255,.4);color:#4f7cff;}
+.vpage{display:none;}.vpage.active{display:block;}
+.vkpi{background:#1a2235;border:1px solid rgba(99,130,255,.12);border-radius:12px;padding:14px;position:relative;overflow:hidden;}
+.vkpi::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;}
+.vkpi.c1::before{background:#f59e0b;}.vkpi.c2::before{background:#4f7cff;}.vkpi.c3::before{background:#22d3a5;}.vkpi.c4::before{background:#f43f5e;}.vkpi.c5::before{background:#a78bfa;}
+.vkpi-l{font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.vkpi-v{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.vkpi-v.c1{color:#f59e0b;}.vkpi-v.c2{color:#4f7cff;}.vkpi-v.c3{color:#22d3a5;}.vkpi-v.c4{color:#f43f5e;}.vkpi-v.c5{color:#a78bfa;}
+.vsc{background:#1a2235;border:1px solid rgba(99,130,255,.12);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+.vsc-h{padding:11px 14px;border-bottom:1px solid rgba(99,130,255,.12);font-size:13px;font-weight:600;color:#e8eaf0;}
+.vsc-b{padding:12px 14px;}
+.vtc{background:#141b2d;border:1px solid rgba(99,130,255,.12);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.vrk{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.vrk1{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;}.vrk2{background:rgba(148,163,184,.2);color:#94a3b8;}.vrk3{background:rgba(180,120,60,.2);color:#b47c3c;}.vrkn{background:rgba(79,124,255,.1);color:#4f7cff;}
+.vtb{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.vtb.hit{background:rgba(34,211,165,.12);color:#22d3a5;}.vtb.miss{background:rgba(244,63,94,.12);color:#f43f5e;}.vtb.close{background:rgba(245,158,11,.12);color:#f59e0b;}
+.vbt{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;font-family:monospace;}
+.vbt.ms{background:rgba(79,124,255,.12);color:#4f7cff;}.vbt.ma{background:rgba(34,211,165,.12);color:#22d3a5;}
+.vty{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.vty.noticket{background:rgba(244,63,94,.12);color:#f43f5e;}.vty.expired{background:rgba(245,158,11,.12);color:#f59e0b;}.vty.foot{background:rgba(56,189,248,.12);color:#38bdf8;}.vty.other{background:rgba(255,255,255,.06);color:#8892aa;}
+.vdc{display:inline-block;background:#141b2d;border:1px solid rgba(99,130,255,.12);border-radius:5px;padding:1px 6px;font-size:10px;font-family:monospace;color:#8892aa;}
+.vbar-w{margin-bottom:8px;}.vbar-l{display:flex;justify-content:space-between;font-size:12px;color:#e8eaf0;margin-bottom:3px;}.vbar-t{height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}.vbar-f{height:100%;border-radius:3px;transition:width .8s;}
+.vprog-w{display:flex;align-items:center;gap:10px;margin-bottom:9px;}.vprog-o{flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}.vprog-i{height:100%;border-radius:4px;transition:width .8s;}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sb">
+  <div class="sb-logo">⬡</div>
+
+  <div class="sb-item active" onclick="showDash(this)" data-tip="الرئيسية">
+    <div class="icon">▦</div>
+    <div class="lbl">الرئيسية</div>
+  </div>
+
+  <div class="sb-sep"></div>
+
+  <div class="sb-item" onclick="openModule('staff',this)" data-tip="إدارة الفريق">
+    <div class="icon">👥</div>
+    <div class="lbl">الفريق</div>
+  </div>
+
+  <div class="sb-item" onclick="openModule('inspection',this)" data-tip="فحص الحافلات">
+    <div class="icon">🚌</div>
+    <div class="lbl">الفحص</div>
+  </div>
+
+  <div class="sb-item" onclick="openModule('violations',this)" data-tip="المخالفات">
+    <div class="icon">📋</div>
+    <div class="lbl">المخالفات</div>
+  </div>
+
+  <div class="sb-item" onclick="openModule('roster',this)" data-tip="جدول الدوام">
+    <div class="icon">📅</div>
+    <div class="lbl">الروستر</div>
+  </div>
+
+  <div class="sb-item" onclick="openModule('builder',this)" data-tip="إنشاء روستر جديد">
+    <div class="icon">🛠️</div>
+    <div class="lbl">بناء روستر</div>
+  </div>
+
+  <div class="sb-bottom">
+    <div class="sb-user" title="Majid N. Alhashmy">MN</div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title" id="topTitle">Operations Hub</div>
+    <div class="topbar-sub" id="topSub">Makkah Bus Project — v3.0</div>
+    <div class="topbar-right">
+      <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+      <div class="time-chip" id="clockEl"></div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div class="dash-page" id="dashPage">
+
+      <!-- Welcome -->
+      <div class="welcome-strip">
+        <div class="welcome-avatar">MN</div>
+        <div class="welcome-text">
+          <h2>مرحباً، Majid 👋</h2>
+          <p>Operations Supervisor — Makkah Bus Project</p>
+        </div>
+        <div class="welcome-date" id="welcomeDate"></div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row">
+        <div class="kpi a">
+          <div class="kpi-lbl">إجمالي الفريق</div>
+          <div class="kpi-val">42</div>
+          <div class="kpi-sub">موظف نشط</div>
+          <div class="kpi-icon">👥</div>
+        </div>
+        <div class="kpi b">
+          <div class="kpi-lbl">فحوصات اليوم</div>
+          <div class="kpi-val" id="kpiInspect">—</div>
+          <div class="kpi-sub">ارفع ملف الفحص</div>
+          <div class="kpi-icon">🚌</div>
+        </div>
+        <div class="kpi c">
+          <div class="kpi-lbl">المخالفات المحررة</div>
+          <div class="kpi-val" id="kpiViol">—</div>
+          <div class="kpi-sub">ارفع ملف المخالفات</div>
+          <div class="kpi-icon">📋</div>
+        </div>
+        <div class="kpi d">
+          <div class="kpi-lbl">غيابات مسجلة</div>
+          <div class="kpi-val" id="kpiAbsent">—</div>
+          <div class="kpi-sub">ارفع ملف الحضور</div>
+          <div class="kpi-icon">⚠</div>
+        </div>
+      </div>
+
+      <!-- Module cards -->
+      <div class="modules-grid">
+
+        <div class="mod-card blue" onclick="openModule('staff',null)">
+          <div class="mod-header">
+            <div class="mod-icon">👥</div>
+            <div>
+              <div class="mod-name">إدارة الفريق</div>
+              <div class="mod-sub">Operations Hub v2</div>
+            </div>
+          </div>
+          <div class="mod-stats">
+            <div class="mod-stat">الموظفون: <strong>42</strong></div>
+            <div class="mod-stat">Enforcement: <strong>21</strong></div>
+            <div class="mod-stat">Stations: <strong>14</strong></div>
+            <div class="mod-stat">Office: <strong>6</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <button class="open-btn" onclick="event.stopPropagation();openModule('staff',null)">فتح النظام ←</button>
+            <div style="font-size:11px;color:var(--text3);">الحضور · الإنذارات · الملفات الشخصية</div>
+          </div>
+        </div>
+
+        <div class="mod-card green" onclick="openModule('inspection',null)">
+          <div class="mod-header">
+            <div class="mod-icon">🚌</div>
+            <div>
+              <div class="mod-name">فحص الحافلات</div>
+              <div class="mod-sub">Inspection Dashboard v3</div>
+            </div>
+          </div>
+          <div class="mod-stats">
+            <div class="mod-stat">نوعا الباص: <strong>MS · MA</strong></div>
+            <div class="mod-stat">أفضل أداء: <strong>Top 5</strong></div>
+            <div class="mod-stat">تحليل: <strong>التهرب</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <button class="open-btn" onclick="event.stopPropagation();openModule('inspection',null)">فتح النظام ←</button>
+            <div style="font-size:11px;color:var(--text3);">KPIs · شارتات · مسارات</div>
+          </div>
+        </div>
+
+        <div class="mod-card amber" onclick="openModule('violations',null)">
+          <div class="mod-header">
+            <div class="mod-icon">📋</div>
+            <div>
+              <div class="mod-name">تحرير المخالفات</div>
+              <div class="mod-sub">Violations Dashboard v1</div>
+            </div>
+          </div>
+          <div class="mod-stats">
+            <div class="mod-stat">الهدف: <strong>5 / موظف</strong></div>
+            <div class="mod-stat">أنواع: <strong>4</strong></div>
+            <div class="mod-stat">تحليل: <strong>المسارات</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <button class="open-btn" onclick="event.stopPropagation();openModule('violations',null)">فتح النظام ←</button>
+            <div style="font-size:11px;color:var(--text3);">الأداء · السجل · التنبيهات</div>
+          </div>
+        </div>
+
+        <div class="mod-card purple" onclick="openModule('roster',null)">
+          <div class="mod-header">
+            <div class="mod-icon">📅</div>
+            <div>
+              <div class="mod-name">جدول الدوام</div>
+              <div class="mod-sub">Roster Dashboard v1</div>
+            </div>
+          </div>
+          <div class="mod-stats">
+            <div class="mod-stat">الشيفتات: <strong>59 · 58 · 30</strong></div>
+            <div class="mod-stat">المشرفون: <strong>6 ثابتون</strong></div>
+            <div class="mod-stat">الإجازات: <strong>يدوي</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <button class="open-btn" onclick="event.stopPropagation();openModule('roster',null)">فتح النظام ←</button>
+            <div style="font-size:11px;color:var(--text3);">الإجازات · ملف الموظف · عرض الروستر</div>
+          </div>
+        </div>
+
+        <div class="mod-card blue" onclick="openModule('builder',null)" style="border-color:rgba(139,92,246,.2);">
+          <div class="mod-header">
+            <div class="mod-icon" style="background:rgba(139,92,246,.15);">🛠️</div>
+            <div>
+              <div class="mod-name">إنشاء روستر جديد</div>
+              <div class="mod-sub">Roster Builder — ذكي تلقائي</div>
+            </div>
+          </div>
+          <div class="mod-stats">
+            <div class="mod-stat">التبديل: <strong>كل أسبوعين</strong></div>
+            <div class="mod-stat">الحد الأدنى: <strong>قابل للضبط</strong></div>
+            <div class="mod-stat">التصدير: <strong>Excel</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <button class="open-btn" onclick="event.stopPropagation();openModule('builder',null)" style="background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.3);color:var(--purple);">فتح المنشئ ←</button>
+            <div style="font-size:11px;color:var(--text3);">شيفت ليل · ثابت/متغير · ترقيات</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Activity -->
+      <div class="activity">
+        <div class="act-title">📌 تعليمات الاستخدام</div>
+        <div class="act-item">
+          <div class="act-dot blue"></div>
+          <span>اضغط على أي نظام من الأزرار الجانبية أو البطاقات لفتحه</span>
+          <span class="act-time">نصيحة 1</span>
+        </div>
+        <div class="act-item">
+          <div class="act-dot green"></div>
+          <span>كل نظام مستقل — ارفع ملف Excel من داخله وتظهر البيانات فوراً</span>
+          <span class="act-time">نصيحة 2</span>
+        </div>
+        <div class="act-item">
+          <div class="act-dot amber"></div>
+          <span>الأنظمة الخمسة: الفريق · الفحص · المخالفات · الروستر · منشئ الروستر</span>
+          <span class="act-time">نصيحة 3</span>
+        </div>
+        <div class="act-item">
+          <div class="act-dot blue"></div>
+          <span>زر الرجوع ← يعيدك للصفحة الرئيسية في أي وقت</span>
+          <span class="act-time">نصيحة 4</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── MODULE VIEWS ── -->
+    <div class="module-view" id="mv-staff">
+      <div class="module-topbar">
+        <button class="back-btn" onclick="showDash(null)">← رجوع</button>
+        <div class="module-name-bar">👥 إدارة الفريق — Operations Hub v2</div>
+        <div style="margin-right:auto;font-size:10px;color:var(--text3);font-family:monospace;">operations_hub_v2.html</div>
+      </div>
+      <iframe class="module-iframe" id="iframe-staff" src="operations_hub_v2.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="module-view" id="mv-inspection">
+      <div class="module-topbar">
+        <button class="back-btn" onclick="showDash(null)">← رجوع</button>
+        <div class="module-name-bar">🚌 فحص الحافلات — Inspection Dashboard v3</div>
+        <div style="margin-right:auto;font-size:10px;color:var(--text3);font-family:monospace;">inspection_dashboard_v3.html</div>
+      </div>
+      <iframe class="module-iframe" id="iframe-inspection" src="inspection_dashboard_v3.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="module-view" id="mv-violations">
+      <div class="module-topbar">
+        <button class="back-btn" onclick="showDash(null)">← رجوع</button>
+        <div class="module-name-bar">📋 المخالفات — Violations Dashboard</div>
+        <div style="margin-right:auto;display:flex;align-items:center;gap:8px;">
+          <span id="vFileLabel" style="font-size:10px;color:var(--text3);font-family:monospace;"></span>
+        </div>
+      </div>
+      <!-- Violations sub-nav -->
+      <div style="background:#0b1120;border-bottom:1px solid rgba(82,119,255,.1);padding:8px 20px;display:flex;gap:6px;flex-shrink:0;">
+        <button class="vnav-btn active" onclick="vNav('vdash',this)">▦ لوحة التحكم</button>
+        <button class="vnav-btn" onclick="vNav('vupload',this)">⬆ رفع الملف</button>
+        <button class="vnav-btn" onclick="vNav('vperf',this)">🎯 أداء الموظفين</button>
+        <button class="vnav-btn" onclick="vNav('vrec',this)">◉ سجل المخالفات</button>
+        <button class="vnav-btn" onclick="vNav('vroutes',this)">🛣️ المسارات</button>
+      </div>
+      <!-- Violations content -->
+      <div style="flex:1;overflow-y:auto;padding:20px 24px;background:#0a0e1a;direction:rtl;" id="vContent">
+
+        <!-- VDASH -->
+        <div id="vdash" class="vpage active">
+          <div id="vdash-empty" style="text-align:center;padding:50px 20px;color:#5a6580;">
+            <div style="font-size:40px;margin-bottom:12px;">📋</div>
+            <div style="font-size:14px;font-weight:600;color:#8892aa;margin-bottom:6px;">لا توجد بيانات مخالفات بعد</div>
+            <button onclick="vNav('vupload',document.querySelectorAll('.vnav-btn')[1])" style="background:#f59e0b;color:#000;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px;">⬆ رفع ملف المخالفات</button>
+          </div>
+          <div id="vdash-content" style="display:none;">
+            <div id="vsumStrip" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;"></div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;">
+              <div class="vkpi c1"><div class="vkpi-l">إجمالي المخالفات</div><div class="vkpi-v c1" id="vkTotal">0</div></div>
+              <div class="vkpi c2"><div class="vkpi-l">الموظفون النشطون</div><div class="vkpi-v c2" id="vkEmp">0</div></div>
+              <div class="vkpi c3"><div class="vkpi-l">حققوا الهدف (5+)</div><div class="vkpi-v c3" id="vkHit">0</div></div>
+              <div class="vkpi c4"><div class="vkpi-l">لم يحققوا الهدف</div><div class="vkpi-v c4" id="vkMiss">0</div></div>
+              <div class="vkpi c5"><div class="vkpi-l">متوسط / موظف</div><div class="vkpi-v c5" id="vkAvg">0</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+              <div class="vsc"><div class="vsc-h">🏆 أعلى 5 موظفين</div><div class="vsc-b" id="vdTop5"></div></div>
+              <div class="vsc"><div class="vsc-h">📊 أنواع المخالفات</div><div class="vsc-b" style="display:flex;align-items:center;justify-content:center;padding:10px;"><canvas id="vChartPie" style="max-width:220px;max-height:220px;"></canvas></div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:18px;">
+              <div class="vsc"><div class="vsc-h">📈 المخالفات اليومية — آخر 10 أيام</div><div class="vsc-b" style="padding:10px 14px;"><canvas id="vChartLine" height="130"></canvas></div></div>
+              <div class="vsc"><div class="vsc-h">🛣️ أعلى المسارات</div><div class="vsc-b" id="vdTopRoutes"></div></div>
+            </div>
+            <div class="vsc">
+              <div class="vsc-h" style="display:flex;justify-content:space-between;">🎯 الهدف: 5 مخالفات / موظف<span id="vtargetSummary" style="font-size:11px;color:#5a6580;"></span></div>
+              <div class="vsc-b" id="vdTarget"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VUPLOAD -->
+        <div id="vupload" class="vpage">
+          <div style="border:2px dashed rgba(99,130,255,.25);border-radius:16px;padding:32px;text-align:center;margin-bottom:20px;background:rgba(245,158,11,.03);">
+            <div style="font-size:34px;margin-bottom:10px;">📋</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#e8eaf0;">ارفع ملف المخالفات</div>
+            <div style="font-size:12px;color:#5a6580;margin-bottom:16px;">SR · ID · Name · Date · Time · Type · Bus Type · Bus No · Route · Violation No</div>
+            <label style="display:inline-block;cursor:pointer;">
+              <input type="file" accept=".xlsx,.xls" id="vFileInput" style="display:none;">
+              <span style="background:#f59e0b;color:#000;border:none;padding:11px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:inline-block;">📂 اختر ملف Excel</span>
+            </label>
+          </div>
+          <div id="vUpStat" style="display:none;background:#1a2235;border:1px solid rgba(99,130,255,.12);border-radius:10px;padding:12px 16px;margin-bottom:16px;align-items:center;gap:10px;font-size:12px;color:#e8eaf0;">
+            <span id="vUpIcon" style="font-size:16px;"></span>
+            <div><strong id="vUpTitle" style="display:block;font-size:13px;margin-bottom:1px;"></strong><span id="vUpSub" style="color:#5a6580;font-size:11px;"></span></div>
+          </div>
+        </div>
+
+        <!-- VPERF -->
+        <div id="vperf" class="vpage">
+          <div id="vperf-empty" style="text-align:center;padding:40px;color:#5a6580;">ارفع ملف المخالفات أولاً</div>
+          <div id="vperf-content" style="display:none;">
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+              <select id="vperfDate" onchange="vRenderPerf()" style="background:#141b2d;border:1px solid rgba(99,130,255,.25);border-radius:8px;color:#e8eaf0;font-family:inherit;font-size:12px;padding:7px 12px;outline:none;cursor:pointer;"><option value="">كل التواريخ</option></select>
+              <select id="vperfStatus" onchange="vRenderPerf()" style="background:#141b2d;border:1px solid rgba(99,130,255,.25);border-radius:8px;color:#e8eaf0;font-family:inherit;font-size:12px;padding:7px 12px;outline:none;cursor:pointer;">
+                <option value="">الكل</option><option value="hit">✅ حقق (5+)</option><option value="close">🟡 قريب (3-4)</option><option value="miss">🔴 لم يحقق</option>
+              </select>
+            </div>
+            <div class="vsc"><div class="vsc-h" style="display:flex;justify-content:space-between;">أداء الموظفين<span id="vperfCount" style="font-size:11px;color:#5a6580;"></span></div><div class="vsc-b" id="vperfList"></div></div>
+          </div>
+        </div>
+
+        <!-- VREC -->
+        <div id="vrec" class="vpage">
+          <div id="vrec-empty" style="text-align:center;padding:40px;color:#5a6580;">ارفع ملف المخالفات أولاً</div>
+          <div id="vrec-content" style="display:none;">
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+              <input id="vrecQ" type="text" placeholder="ابحث..." oninput="vRenderRec()" style="flex:1;min-width:150px;background:#1a2235;border:1px solid rgba(99,130,255,.12);border-radius:8px;padding:7px 12px;font-size:12px;color:#e8eaf0;font-family:inherit;outline:none;">
+              <select id="vrecDate" onchange="vRenderRec()" style="background:#141b2d;border:1px solid rgba(99,130,255,.25);border-radius:8px;color:#e8eaf0;font-family:inherit;font-size:12px;padding:7px 12px;outline:none;cursor:pointer;"><option value="">كل التواريخ</option></select>
+              <select id="vrecType" onchange="vRenderRec()" style="background:#141b2d;border:1px solid rgba(99,130,255,.25);border-radius:8px;color:#e8eaf0;font-family:inherit;font-size:12px;padding:7px 12px;outline:none;cursor:pointer;"><option value="">كل الأنواع</option><option value="noticket">بدون تذكرة</option><option value="expired">منتهية</option><option value="foot">وضع القدم</option></select>
+            </div>
+            <div class="vsc">
+              <div class="vsc-h" style="display:flex;justify-content:space-between;">سجل المخالفات<span id="vrecCount" style="font-size:11px;color:#5a6580;"></span></div>
+              <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;min-width:680px;">
+                <thead><tr style="background:#141b2d;">
+                  <th style="font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:right;border-bottom:1px solid rgba(99,130,255,.12);">التاريخ</th>
+                  <th style="font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:right;border-bottom:1px solid rgba(99,130,255,.12);">الرقم</th>
+                  <th style="font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:right;border-bottom:1px solid rgba(99,130,255,.12);">الموظف</th>
+                  <th style="font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:right;border-bottom:1px solid rgba(99,130,255,.12);">نوع المخالفة</th>
+                  <th style="font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:center;border-bottom:1px solid rgba(99,130,255,.12);">الباص</th>
+                  <th style="font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:center;border-bottom:1px solid rgba(99,130,255,.12);">المسار</th>
+                  <th style="font-size:10px;color:#5a6580;font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:center;border-bottom:1px solid rgba(99,130,255,.12);">رقم المخالفة</th>
+                </tr></thead>
+                <tbody id="vrecBody"></tbody>
+              </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VROUTES -->
+        <div id="vroutes" class="vpage">
+          <div id="vroutes-empty" style="text-align:center;padding:40px;color:#5a6580;">ارفع ملف المخالفات أولاً</div>
+          <div id="vroutes-content" style="display:none;">
+            <div class="vsc"><div class="vsc-h">📊 المخالفات حسب المسار</div><div class="vsc-b" style="padding:10px 14px;"><canvas id="vChartRoutes" height="100"></canvas></div></div>
+            <div class="vsc"><div class="vsc-h">تفصيل المسارات</div><div class="vsc-b" id="vroutesDetail"></div></div>
+          </div>
+        </div>
+
+      </div><!-- /vContent -->
+    </div><!-- /mv-violations -->
+
+    <div class="module-view" id="mv-roster">
+      <div class="module-topbar">
+        <button class="back-btn" onclick="showDash(null)">← رجوع</button>
+        <div class="module-name-bar">📅 جدول الدوام — Roster Dashboard</div>
+        <div style="margin-right:auto;font-size:10px;color:var(--text3);font-family:monospace;">roster_dashboard.html</div>
+      </div>
+      <iframe class="module-iframe" id="iframe-roster" src="roster_dashboard.html" loading="lazy"></iframe>
+    </div>
+
+    <div class="module-view" id="mv-builder">
+      <div class="module-topbar">
+        <button class="back-btn" onclick="showDash(null)">← رجوع</button>
+        <div class="module-name-bar">🛠️ إنشاء روستر جديد — Roster Builder</div>
+        <div style="margin-right:auto;font-size:10px;color:var(--text3);font-family:monospace;">roster_dashboard.html → Builder Page</div>
+      </div>
+      <iframe class="module-iframe" id="iframe-builder" src="roster_dashboard.html#builder" loading="lazy"></iframe>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockEl').textContent =
+    now.toLocaleTimeString('en-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── Date ──
+const now = new Date();
+document.getElementById('welcomeDate').innerHTML =
+  now.toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) +
+  '<br><span style="font-size:10px;font-family:monospace;">' +
+  now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + '</span>';
+
+// ── Navigation ──
+let currentModule = null;
+
+function showDash(navEl) {
+  // Hide all module views
+  document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('dashPage').style.display = 'block';
+  // Reset topbar
+  document.getElementById('topTitle').textContent = 'Operations Hub';
+  document.getElementById('topSub').textContent   = 'Makkah Bus Project — v3.0';
+  // Sidebar
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  else document.querySelector('.sb-item').classList.add('active');
+  currentModule = null;
+}
+
+const MODULE_INFO = {
+  staff:      {title:'إدارة الفريق',         sub:'Operations Hub v2'},
+  inspection: {title:'فحص الحافلات',         sub:'Inspection Dashboard v3'},
+  violations: {title:'تحرير المخالفات',      sub:'Violations Dashboard v1'},
+  roster:     {title:'جدول الدوام',           sub:'Roster Dashboard v1'},
+  builder:    {title:'🛠️ إنشاء روستر جديد', sub:'Roster Builder — ارفع روستر أولاً ثم انتقل لصفحة البناء'},
+};
+
+function openModule(mod, navEl) {
+  document.getElementById('dashPage').style.display = 'none';
+  document.querySelectorAll('.module-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('mv-'+mod).classList.add('active');
+  const info = MODULE_INFO[mod];
+  document.getElementById('topTitle').textContent = info.title;
+  document.getElementById('topSub').textContent   = info.sub;
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  else {
+    const items = document.querySelectorAll('.sb-item');
+    const map = {staff:1,inspection:2,violations:3,roster:4,builder:5};
+    if(items[map[mod]]) items[map[mod]].classList.add('active');
+  }
+  currentModule = mod;
+}
+
+// ── VIOLATIONS MODULE ──────────────────────────────────
+let VDATA = [];
+let vChartPie=null, vChartLine=null, vChartRoutes=null;
+
+function vNav(page, btn) {
+  document.querySelectorAll('.vpage').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.vnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+function vTypeClass(t) {
+  if(!t) return 'other';
+  const l=t.toLowerCase();
+  if(l.includes('without a ticket')||l.includes('not presenting')) return 'noticket';
+  if(l.includes('expired')) return 'expired';
+  if(l.includes('foot')) return 'foot';
+  return 'other';
+}
+function vDateStr(s) {
+  if(!s||isNaN(s)) return String(s)||'—';
+  return new Date((s-25569)*86400000).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function vBuildEmpMap(D) {
+  const m={};
+  D.forEach(r=>{
+    if(!m[r.id]) m[r.id]={id:r.id,name:r.name,count:0,byType:{}};
+    m[r.id].count++;
+    const tc=vTypeClass(r.vtype);
+    m[r.id].byType[tc]=(m[r.id].byType[tc]||0)+1;
+  });
+  return m;
+}
+
+// File input
+document.getElementById('vFileInput').addEventListener('change', function(){
+  const file=this.files[0]; if(!file) return;
+  const stat=document.getElementById('vUpStat');
+  stat.style.display='flex';
+  document.getElementById('vUpIcon').textContent='⏳';
+  document.getElementById('vUpTitle').textContent='جاري قراءة الملف...';
+  document.getElementById('vUpSub').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      const data=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r||r.length<9) continue;
+        data.push({sr:r[0],id:r[1],name:String(r[2]||'').trim(),date:r[3],time:r[4],vtype:String(r[5]||'').trim(),busType:String(r[6]||'').trim(),busNo:r[7],route:r[8],violNo:r[9]||''});
+      }
+      if(!data.length) throw new Error('الملف فارغ');
+      VDATA=data;
+      document.getElementById('vUpIcon').textContent='✅';
+      document.getElementById('vUpTitle').textContent=`تم الرفع — ${data.length} مخالفة`;
+      document.getElementById('vUpSub').textContent=file.name;
+      document.getElementById('vFileLabel').textContent=file.name;
+      // Update main dashboard KPI
+      document.getElementById('kpiViol').textContent=data.length.toLocaleString();
+      document.querySelector('#kpiViol').closest('.kpi').querySelector('.kpi-sub').textContent='مخالفة محررة';
+      vBuildAll();
+    }catch(err){
+      document.getElementById('vUpIcon').textContent='❌';
+      document.getElementById('vUpTitle').textContent='خطأ: '+err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function vBuildAll(){
+  const D=VDATA;
+  const empMap=vBuildEmpMap(D);
+  const emps=Object.values(empMap);
+  const hit=emps.filter(e=>e.count>=5).length;
+  const miss=emps.filter(e=>e.count<5).length;
+  const avg=emps.length>0?(D.length/emps.length).toFixed(1):0;
+  document.getElementById('vkTotal').textContent=D.length.toLocaleString();
+  document.getElementById('vkEmp').textContent=emps.length;
+  document.getElementById('vkHit').textContent=hit;
+  document.getElementById('vkMiss').textContent=miss;
+  document.getElementById('vkAvg').textContent=avg;
+
+  const byType={};
+  D.forEach(r=>{const c=vTypeClass(r.vtype);byType[c]=(byType[c]||0)+1;});
+
+  document.getElementById('vsumStrip').innerHTML=`
+    <div style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,.05);border:1px solid rgba(99,130,255,.12);">📋 ${D.length} مخالفة</div>
+    <div style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:#f43f5e;">بدون تذكرة: ${byType.noticket||0}</div>
+    <div style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#f59e0b;">منتهية: ${byType.expired||0}</div>
+    <div style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38bdf8;">وضع القدم: ${byType.foot||0}</div>
+  `;
+
+  // Top 5
+  const sorted=emps.sort((a,b)=>b.count-a.count);
+  const mx=sorted[0]?.count||1;
+  document.getElementById('vdTop5').innerHTML=sorted.slice(0,5).map((e,i)=>{
+    const rc=['vrk1','vrk2','vrk3','vrkn','vrkn'][i];
+    const tgt=e.count>=5?'hit':e.count>=3?'close':'miss';
+    const tgtL={hit:'✅ حقق',close:'🟡 قريب',miss:'🔴 لم يحقق'};
+    return `<div class="vtc"><div class="vrk ${rc}">${i+1}</div>
+      <div style="flex:1;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <div><div style="font-size:12px;font-weight:600;color:#e8eaf0;">${e.name}</div><div style="font-size:9px;color:#5a6580;font-family:monospace;">#${e.id}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;"><span class="vtb ${tgt}">${tgtL[tgt]}</span><span style="font-family:monospace;font-size:18px;font-weight:700;color:#f59e0b;">${e.count}</span></div></div>
+        <div class="vbar-t"><div class="vbar-f" style="width:${(e.count/mx)*100}%;background:${i===0?'#f59e0b':'#4f7cff'};"></div></div>
+      </div></div>`;
+  }).join('');
+
+  // Pie
+  if(vChartPie) vChartPie.destroy();
+  vChartPie=new Chart(document.getElementById('vChartPie'),{type:'doughnut',
+    data:{labels:['بدون تذكرة','منتهية','وضع القدم','أخرى'],datasets:[{data:[byType.noticket||0,byType.expired||0,byType.foot||0,byType.other||0],backgroundColor:['rgba(244,63,94,.8)','rgba(245,158,11,.8)','rgba(56,189,248,.8)','rgba(99,130,255,.5)'],borderWidth:2,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,color:'#8892aa',font:{size:11}}},tooltip:{backgroundColor:'#1a2235',borderColor:'rgba(99,130,255,.25)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#8892aa'}}}
+  });
+
+  // Line
+  const byDate={};
+  D.forEach(r=>{byDate[r.date]=(byDate[r.date]||0)+1;});
+  const last10=Object.entries(byDate).sort((a,b)=>a[0]-b[0]).slice(-10);
+  if(vChartLine) vChartLine.destroy();
+  vChartLine=new Chart(document.getElementById('vChartLine'),{type:'line',
+    data:{labels:last10.map(([dk])=>vDateStr(Number(dk))),datasets:[{label:'المخالفات',data:last10.map(([,v])=>v),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',fill:true,tension:.4,pointBackgroundColor:'#f59e0b',pointRadius:4,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#8892aa',boxWidth:10}},tooltip:{backgroundColor:'#1a2235',borderColor:'rgba(99,130,255,.25)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#8892aa'}},scales:{x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580',maxRotation:30}},y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}}}
+  });
+
+  // Top routes
+  const byRoute={};
+  D.forEach(r=>{byRoute['خط '+r.route]=(byRoute['خط '+r.route]||0)+1;});
+  const topR=Object.entries(byRoute).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const mxR=topR[0]?.[1]||1;
+  document.getElementById('vdTopRoutes').innerHTML=topR.map(([rn,cnt])=>`
+    <div class="vbar-w"><div class="vbar-l"><span style="font-weight:600;">${rn}</span><span style="color:#f59e0b;font-weight:700;font-family:monospace;">${cnt}</span></div>
+    <div class="vbar-t"><div class="vbar-f" style="width:${(cnt/mxR)*100}%;background:#f59e0b;"></div></div></div>`).join('');
+
+  // Target
+  const pct=emps.length>0?Math.round(hit/emps.length*100):0;
+  document.getElementById('vtargetSummary').textContent=`${hit} من ${emps.length} موظف حققوا الهدف (${pct}%)`;
+  const hitL=sorted.filter(e=>e.count>=5),closeL=sorted.filter(e=>e.count>=3&&e.count<5),missL=sorted.filter(e=>e.count<3);
+  document.getElementById('vdTarget').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+      <div style="background:rgba(34,211,165,.06);border:1px solid rgba(34,211,165,.2);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#22d3a5;font-family:monospace;">${hitL.length}</div><div style="font-size:10px;color:#5a6580;margin-top:3px;">✅ حققوا الهدف (5+)</div></div>
+      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#f59e0b;font-family:monospace;">${closeL.length}</div><div style="font-size:10px;color:#5a6580;margin-top:3px;">🟡 قريب (3-4)</div></div>
+      <div style="background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.2);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:700;color:#f43f5e;font-family:monospace;">${missL.length}</div><div style="font-size:10px;color:#5a6580;margin-top:3px;">🔴 لم يحققوا (0-2)</div></div>
+    </div>
+    ${sorted.map(e=>{const p2=Math.min(e.count/5*100,100);const cl=e.count>=5?'#22d3a5':e.count>=3?'#f59e0b':'#f43f5e';const tgt=e.count>=5?'hit':e.count>=3?'close':'miss';const tL={hit:'✅ حقق',close:'🟡 قريب',miss:'🔴 لم يحقق'};
+    return `<div class="vprog-w"><div style="min-width:160px;font-size:12px;font-weight:500;color:#e8eaf0;">${e.name} <span style="color:#5a6580;font-size:10px;font-family:monospace;">#${e.id}</span></div>
+    <div class="vprog-o"><div class="vprog-i" style="width:${p2}%;background:${cl};"></div></div>
+    <div style="min-width:80px;display:flex;align-items:center;gap:6px;"><span style="font-family:monospace;font-weight:700;color:${cl};">${e.count}/5</span><span class="vtb ${tgt}" style="font-size:10px;padding:2px 7px;">${tL[tgt]}</span></div></div>`;}).join('')}`;
+
+  // Date filters
+  const dates=Object.keys(byDate).map(Number).sort((a,b)=>a-b);
+  ['vperfDate','vrecDate'].forEach(id=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML='<option value="">كل التواريخ</option>'+dates.map(dk=>`<option value="${dk}">${vDateStr(dk)}</option>`).join('');
+  });
+
+  // Show content
+  document.getElementById('vdash-empty').style.display='none';
+  document.getElementById('vdash-content').style.display='block';
+  ['vperf','vrec','vroutes'].forEach(p=>{
+    const em=document.getElementById(p+'-empty'); if(em) em.style.display='none';
+    const co=document.getElementById(p+'-content'); if(co) co.style.display='block';
+  });
+  vRenderPerf(); vRenderRec(); vRenderRoutes();
+}
+
+function vRenderPerf(){
+  const dateF=document.getElementById('vperfDate').value;
+  const statusF=document.getElementById('vperfStatus').value;
+  let D=VDATA;
+  if(dateF) D=D.filter(r=>String(r.date)===dateF);
+  const empMap=vBuildEmpMap(D);
+  let emps=Object.values(empMap).sort((a,b)=>b.count-a.count);
+  if(statusF==='hit') emps=emps.filter(e=>e.count>=5);
+  else if(statusF==='close') emps=emps.filter(e=>e.count>=3&&e.count<5);
+  else if(statusF==='miss') emps=emps.filter(e=>e.count<5);
+  document.getElementById('vperfCount').textContent=`${emps.length} موظف`;
+  document.getElementById('vperfList').innerHTML=emps.map(e=>{
+    const p=Math.min(e.count/5*100,100);const cl=e.count>=5?'#22d3a5':e.count>=3?'#f59e0b':'#f43f5e';
+    const tgt=e.count>=5?'hit':e.count>=3?'close':'miss';const tL={hit:'✅ حقق الهدف',close:'🟡 قريب',miss:'🔴 لم يحقق'};
+    return `<div style="background:#141b2d;border:1px solid rgba(99,130,255,.12);border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div><div style="font-size:13px;font-weight:600;color:#e8eaf0;">${e.name}</div><div style="font-size:10px;color:#5a6580;font-family:monospace;">#${e.id}</div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="vtb ${tgt}">${tL[tgt]}</span><span style="font-size:20px;font-weight:700;font-family:monospace;color:${cl};">${e.count}</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;"><div class="vprog-o" style="flex:1;"><div class="vprog-i" style="width:${p}%;background:${cl};"></div></div><span style="font-size:11px;color:#5a6580;min-width:30px;">${Math.round(p)}%</span></div>
+    </div>`;
+  }).join('')||'<div style="text-align:center;padding:24px;color:#5a6580;">لا توجد نتائج</div>';
+}
+
+function vRenderRec(){
+  const q=(document.getElementById('vrecQ').value||'').toLowerCase();
+  const dateF=document.getElementById('vrecDate').value;
+  const typeF=document.getElementById('vrecType').value;
+  let list=VDATA;
+  if(dateF) list=list.filter(r=>String(r.date)===dateF);
+  if(typeF) list=list.filter(r=>vTypeClass(r.vtype)===typeF);
+  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||String(r.id).includes(q)||String(r.violNo).includes(q));
+  document.getElementById('vrecCount').textContent=`${list.length} مخالفة`;
+  const tyMap={noticket:'بدون تذكرة',expired:'منتهية',foot:'وضع القدم',other:'أخرى'};
+  document.getElementById('vrecBody').innerHTML=list.map(r=>{
+    const tc=vTypeClass(r.vtype);
+    return `<tr style="border-bottom:1px solid rgba(99,130,255,.07);">
+      <td style="padding:8px 12px;"><span class="vdc">${vDateStr(r.date)}</span></td>
+      <td style="padding:8px 12px;font-family:monospace;font-size:10px;color:#5a6580;">${r.id}</td>
+      <td style="padding:8px 12px;font-size:12px;font-weight:500;color:#e8eaf0;">${r.name}</td>
+      <td style="padding:8px 12px;"><span class="vty ${tc}">${tyMap[tc]||tc}</span></td>
+      <td style="padding:8px 12px;text-align:center;"><span class="vbt ${(r.busType||'').toLowerCase()}">${r.busType||'—'}</span></td>
+      <td style="padding:8px 12px;text-align:center;font-family:monospace;font-size:11px;color:#8892aa;">${r.route}</td>
+      <td style="padding:8px 12px;text-align:center;font-family:monospace;font-size:10px;color:#5a6580;">${r.violNo}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;padding:24px;color:#5a6580;">لا توجد نتائج</td></tr>';
+}
+
+function vRenderRoutes(){
+  const byRoute={};
+  VDATA.forEach(r=>{const k='خط '+r.route;if(!byRoute[k])byRoute[k]={cnt:0,types:{}};byRoute[k].cnt++;const tc=vTypeClass(r.vtype);byRoute[k].types[tc]=(byRoute[k].types[tc]||0)+1;});
+  const rl=Object.entries(byRoute).sort((a,b)=>b[1].cnt-a[1].cnt);
+  if(vChartRoutes) vChartRoutes.destroy();
+  vChartRoutes=new Chart(document.getElementById('vChartRoutes'),{type:'bar',
+    data:{labels:rl.map(([k])=>k),datasets:[{label:'عدد المخالفات',data:rl.map(([,v])=>v.cnt),backgroundColor:'rgba(245,158,11,.7)',borderColor:'#f59e0b',borderWidth:1,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#8892aa',boxWidth:10}},tooltip:{backgroundColor:'#1a2235',borderColor:'rgba(99,130,255,.25)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#8892aa'}},scales:{x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'}},y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}}}
+  });
+  const mx=rl[0]?.[1].cnt||1;
+  const tyMap={noticket:'بدون تذكرة',expired:'منتهية',foot:'وضع القدم',other:'أخرى'};
+  document.getElementById('vroutesDetail').innerHTML=rl.map(([rn,v])=>`
+    <div class="vbar-w"><div class="vbar-l"><span style="font-weight:600;">${rn}</span><span style="color:#f59e0b;font-weight:700;font-family:monospace;">${v.cnt} مخالفة</span></div>
+    <div class="vbar-t"><div class="vbar-f" style="width:${(v.cnt/mx)*100}%;background:#f59e0b;"></div></div>
+    <div style="font-size:10px;color:#5a6580;margin-top:3px;">${Object.entries(v.types).map(([k,c])=>`${tyMap[k]||k}: ${c}`).join(' · ')}</div></div>`).join('');
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && currentModule) showDash(null);
+});
+</script>
+</body>
+</html>

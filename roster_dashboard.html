@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roster Dashboard — Makkah Bus Project</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e1a;--bg2:#0f1525;--bg3:#141b2d;--card:#1a2235;
+  --border:rgba(99,130,255,.12);--border2:rgba(99,130,255,.25);
+  --accent:#4f7cff;--accent2:#7c5cfc;
+  --green:#22d3a5;--amber:#f59e0b;--red:#f43f5e;--blue:#38bdf8;--purple:#a78bfa;
+  --text:#e8eaf0;--text2:#8892aa;--text3:#5a6580;
+  --s59:#4f7cff;--s58:#22d3a5;--s30:#a78bfa;--s26:#f59e0b;--s22:#38bdf8;--sx:#2a3248;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
+
+/* Sidebar */
+.sidebar{position:fixed;top:0;right:0;width:220px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:100;}
+.logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+.logo-title{font-size:13px;font-weight:700;}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.logo-ver{font-size:9px;color:var(--green);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+.nav{padding:14px 0;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border-right:2px solid transparent;}
+.nav-item:hover{background:rgba(79,124,255,.06);color:var(--text);}
+.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(79,124,255,.08);}
+.sidebar-user{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+
+/* Main */
+.main{margin-right:220px;min-height:100vh;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.page-title{font-size:15px;font-weight:600;}
+.badge{background:rgba(34,211,165,.12);border:1px solid rgba(34,211,165,.3);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;}
+.content{padding:22px 26px;}
+.page{display:none;}.page.active{display:block;}
+
+/* Upload */
+.upload-zone{border:2px dashed var(--border2);border-radius:16px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;background:rgba(79,124,255,.03);}
+.upload-zone:hover{border-color:var(--accent);background:rgba(79,124,255,.07);}
+.upload-btn{background:var(--accent);color:#fff;border:none;padding:11px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px;display:inline-block;}
+.upload-status{display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;align-items:center;gap:10px;font-size:12px;}
+.upload-status.show{display:flex;}
+
+/* Section */
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:18px;}
+.sc-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.sc-title{font-size:13px;font-weight:600;}
+.sc-body{padding:14px 16px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+
+/* Shift cell */
+.shift-cell{display:inline-flex;align-items:center;justify-content:center;width:32px;height:28px;border-radius:6px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;cursor:default;}
+.shift-cell.s59{background:rgba(79,124,255,.2);color:var(--s59);}
+.shift-cell.s58{background:rgba(34,211,165,.2);color:var(--s58);}
+.shift-cell.s30{background:rgba(167,139,250,.2);color:var(--s30);}
+.shift-cell.s26{background:rgba(245,158,11,.2);color:var(--s26);}
+.shift-cell.s22{background:rgba(56,189,248,.2);color:var(--s22);}
+.shift-cell.sx{background:rgba(255,255,255,.04);color:var(--text3);}
+
+/* Roster table */
+.roster-wrap{overflow-x:auto;padding-bottom:8px;}
+.roster-table{border-collapse:collapse;white-space:nowrap;}
+.roster-table th{font-size:10px;color:var(--text3);font-weight:600;padding:6px 4px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);position:sticky;top:0;z-index:2;}
+.roster-table th.name-col{text-align:right;padding-right:12px;min-width:180px;position:sticky;right:0;background:var(--bg3);z-index:3;}
+.roster-table td{padding:4px;border-bottom:1px solid rgba(99,130,255,.06);vertical-align:middle;}
+.roster-table td.name-col{padding-right:12px;font-size:12px;font-weight:500;position:sticky;right:0;background:var(--card);z-index:1;min-width:180px;}
+.roster-table tr:hover td{background:rgba(79,124,255,.04);}
+.roster-table tr:hover td.name-col{background:rgba(79,124,255,.08);}
+
+/* Day header */
+.day-num{display:block;font-size:11px;font-weight:700;}
+.day-name{display:block;font-size:9px;color:var(--text3);}
+.weekend-col th,.weekend-col td{background:rgba(255,255,255,.02)!important;}
+
+/* KPI mini */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;}
+.kpi.c1::before{background:var(--accent);}
+.kpi.c2::before{background:var(--green);}
+.kpi.c3::before{background:var(--purple);}
+.kpi.c4::before{background:var(--amber);}
+.kpi.c5::before{background:var(--red);}
+.kpi-lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.kpi-val{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1;}
+.kpi-val.c1{color:var(--accent);}
+.kpi-val.c2{color:var(--green);}
+.kpi-val.c3{color:var(--purple);}
+.kpi-val.c4{color:var(--amber);}
+.kpi-val.c5{color:var(--red);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+
+/* Employee card */
+.emp-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;}
+.emp-header{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.emp-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;}
+.emp-name{font-size:15px;font-weight:700;}
+.emp-id{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+.stat-val{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:2px;}
+
+/* Leave form */
+.leave-form{background:rgba(79,124,255,.05);border:1px solid rgba(79,124,255,.15);border-radius:10px;padding:14px;margin-top:14px;}
+.leave-form-title{font-size:12px;font-weight:600;margin-bottom:10px;color:var(--accent);}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;}
+.finp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;outline:none;}
+.finp:focus{border-color:var(--accent);}
+.finp::placeholder{color:var(--text3);}
+.fsel{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:12px;padding:7px 10px;outline:none;}
+.add-btn{background:var(--accent);border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.add-btn:hover{opacity:.88;}
+
+/* Leave list */
+.leave-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px;}
+.leave-type-badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.lt-annual{background:rgba(34,211,165,.12);color:var(--green);}
+.lt-sick{background:rgba(167,139,250,.12);color:var(--purple);}
+.lt-emergency{background:rgba(244,63,94,.12);color:var(--red);}
+.lt-other{background:rgba(255,255,255,.08);color:var(--text2);}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;margin-right:auto;}
+.del-btn:hover{color:var(--red);}
+
+/* Legend */
+.legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+
+/* Filter row */
+.frow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.fsel2{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:12px;font-weight:600;padding:7px 12px;outline:none;cursor:pointer;min-width:160px;}
+
+/* Empty */
+.empty{text-align:center;padding:50px 20px;color:var(--text3);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.go-btn{background:var(--accent);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:10px;}
+
+/* Bar */
+.bar-wrap{margin-bottom:8px;}
+.bar-lbl{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;}
+.bar-t{height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;}
+.bar-f{height:100%;border-radius:3px;}
+
+/* Today highlight */
+.today-col th,.today-col td .shift-cell{outline:2px solid var(--amber);outline-offset:-1px;border-radius:6px;}
+
+/* Leave cell override */
+.shift-cell.leave-annual{background:rgba(34,211,165,.25);color:var(--green);border:1px solid rgba(34,211,165,.5);}
+.shift-cell.leave-sick{background:rgba(167,139,250,.25);color:var(--purple);border:1px solid rgba(167,139,250,.5);}
+.shift-cell.leave-emergency{background:rgba(244,63,94,.25);color:var(--red);border:1px solid rgba(244,63,94,.5);}
+.shift-cell.leave-other{background:rgba(255,255,255,.1);color:var(--text2);border:1px solid rgba(255,255,255,.2);}
+
+::-webkit-scrollbar{width:4px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* Settings tabs */
+.stab{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;padding:7px 16px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.stab:hover{border-color:var(--border2);color:var(--text);}
+.stab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.stab-panel{margin-bottom:4px;}
+.set-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+
+/* Toggle switch */
+.toggle-wrap{position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;}
+.toggle-wrap input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:22px;transition:.3s;border:1px solid var(--border);}
+.toggle-slider::before{content:'';position:absolute;height:16px;width:16px;left:2px;top:2px;background:var(--text3);border-radius:50%;transition:.3s;}
+.toggle-wrap input:checked+.toggle-slider{background:rgba(34,211,165,.3);border-color:var(--green);}
+.toggle-wrap input:checked+.toggle-slider::before{transform:translateX(18px);background:var(--green);}
+
+/* Number buttons */
+.num-btn{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;font-weight:700;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.num-btn:hover{border-color:var(--accent);color:var(--accent);}
+.num-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--accent);min-width:24px;text-align:center;}
+
+/* Staff settings row */
+.staff-set-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;margin-bottom:7px;flex-wrap:wrap;}
+.staff-set-name{min-width:180px;font-size:12px;font-weight:500;}
+.staff-set-id{font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.role-badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.role-sup{background:rgba(245,158,11,.15);color:var(--amber);}
+.role-staff{background:rgba(79,124,255,.1);color:var(--accent);}
+
+/* Rank row */
+.rank-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;margin-bottom:7px;flex-wrap:wrap;}
+
+@media(max-width:900px){.sidebar{display:none;}.main{margin-right:0;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.two-col{grid-template-columns:1fr;}.stat-grid{grid-template-columns:repeat(2,1fr);}.form-row{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-title">⬡ Operations Hub</div>
+    <div class="logo-sub">Roster Module</div>
+    <div class="logo-ver">v1.0 — MAY 2026</div>
+  </div>
+  <div class="nav">
+    <div class="nav-item active" onclick="nav('dashboard',this)">▦ لوحة التحكم</div>
+    <div class="nav-item" onclick="nav('upload',this)">⬆ رفع الروستر</div>
+    <div class="nav-item" onclick="nav('roster',this)">📅 جدول الدوام الكامل</div>
+    <div class="nav-item" onclick="nav('employee',this)">👤 ملف الموظف</div>
+    <div class="nav-item" onclick="nav('builder',this)">🛠️ إنشاء روستر جديد</div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-av">MN</div>
+    <div>
+      <div style="font-size:12px;font-weight:600;">Majid N. Alhashmy</div>
+      <div style="font-size:10px;color:var(--text3);">Operations Supervisor</div>
+    </div>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="pgTitle">لوحة التحكم — الروستر</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span id="monthLabel" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;"></span>
+      <div class="badge">MAY 2026</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="pg-dashboard">
+      <div id="dash-empty" class="empty">
+        <div class="empty-icon">📅</div>
+        <div class="empty-title">لا يوجد روستر بعد</div>
+        <div style="font-size:12px;">ارفع ملف Excel من صفحة رفع الروستر</div>
+        <button class="go-btn" onclick="nav('upload',document.querySelectorAll('.nav-item')[1])">⬆ رفع الروستر</button>
+      </div>
+      <div id="dash-content" style="display:none;">
+        <!-- Legend -->
+        <div class="sc" style="margin-bottom:18px;">
+          <div class="sc-body" style="padding:12px 16px;">
+            <div class="legend">
+              <span style="font-size:11px;font-weight:600;color:var(--text3);">الأكواد:</span>
+              <div class="leg-item"><span class="shift-cell s59">59</span> صباحي 7ص-4م</div>
+              <div class="leg-item"><span class="shift-cell s58">58</span> مسائي 3م-12ص</div>
+              <div class="leg-item"><span class="shift-cell s30">30</span> ليلي 11م-8ص</div>
+              <div class="leg-item"><span class="shift-cell s26">26</span> مكتب 9ص-6م</div>
+              <div class="leg-item"><span class="shift-cell s22">22</span> مكتب2 8ص-5م</div>
+              <div class="leg-item"><span class="shift-cell sx">X</span> أوف / راحة</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi c1"><div class="kpi-lbl">إجمالي الفريق</div><div class="kpi-val c1" id="kTotal">0</div><div class="kpi-sub">موظف</div></div>
+          <div class="kpi c2"><div class="kpi-lbl">أيام العمل (متوسط)</div><div class="kpi-val c2" id="kWork">0</div><div class="kpi-sub">يوم عمل/موظف</div></div>
+          <div class="kpi c3"><div class="kpi-lbl">أيام الراحة (متوسط)</div><div class="kpi-val c3" id="kOff">0</div><div class="kpi-sub">يوم راحة/موظف</div></div>
+          <div class="kpi c4"><div class="kpi-lbl">صباحي اليوم</div><div class="kpi-val c4" id="kToday59">0</div><div class="kpi-sub">موظف شفت 59</div></div>
+          <div class="kpi c5"><div class="kpi-lbl">مسائي اليوم</div><div class="kpi-val c5" id="kToday58">0</div><div class="kpi-sub">موظف شفت 58</div></div>
+        </div>
+
+        <div class="two-col">
+          <!-- Today's shifts -->
+          <div class="sc">
+            <div class="sc-head"><div class="sc-title">📍 شيفتات اليوم</div><span id="todayDateLabel" style="font-size:11px;color:var(--text3);"></span></div>
+            <div class="sc-body" id="todayShifts"></div>
+          </div>
+          <!-- Shift distribution -->
+          <div class="sc">
+            <div class="sc-head"><div class="sc-title">📊 توزيع الشيفتات — الشهر كامل</div></div>
+            <div class="sc-body" id="shiftDist"></div>
+          </div>
+        </div>
+
+        <!-- Summary per employee -->
+        <div class="sc">
+          <div class="sc-head"><div class="sc-title">📋 ملخص الشهر — كل الموظفين</div></div>
+          <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);">الموظف</th>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 8px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);">أيام العمل</th>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 8px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);">راحة</th>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 8px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);color:var(--s59);">صباحي</th>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 8px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);color:var(--s58);">مسائي</th>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 8px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);color:var(--s30);">ليلي</th>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 8px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);color:var(--s26);">مكتب</th>
+                <th style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg3);">الشيفت الغالب</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTableBody"></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="page" id="pg-upload">
+      <input type="file" accept=".xlsx,.xls" id="fInput" style="display:none;">
+      <div class="upload-zone" onclick="document.getElementById('fInput').click()">
+        <div style="font-size:34px;margin-bottom:10px;">📅</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px;">ارفع ملف الروستر الشهري</div>
+        <div style="font-size:12px;color:var(--text3);">التنسيق: SR · ID · Staff Name · يوم1 · يوم2 · ... (أكواد الشيفتات)</div>
+        <label style="display:inline-block;margin-top:14px;">
+          <input type="file" accept=".xlsx,.xls" id="fInput2" style="display:none;">
+          <span class="upload-btn">📂 اختر ملف Excel</span>
+        </label>
+      </div>
+      <div class="upload-status" id="upStat">
+        <span id="upIcon" style="font-size:16px;"></span>
+        <div><strong id="upTitle" style="display:block;font-size:13px;margin-bottom:1px;"></strong><span id="upSub" style="color:var(--text3);font-size:11px;"></span></div>
+      </div>
+      <div class="sc">
+        <div class="sc-head"><div class="sc-title">📋 الأكواد المدعومة</div></div>
+        <div class="sc-body">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr><th style="font-size:10px;color:var(--text3);padding:8px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);">الكود</th><th style="font-size:10px;color:var(--text3);padding:8px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);">الشيفت</th><th style="font-size:10px;color:var(--text3);padding:8px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);">الوقت</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="shift-cell s59">59</span></td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;">صباحي</td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">7:00 ص — 4:00 م</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="shift-cell s58">58</span></td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;">مسائي</td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">3:00 م — 12:00 ص</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="shift-cell s30">30</span></td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;">ليلي</td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">11:00 م — 8:00 ص</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="shift-cell s26">26</span></td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;">مكتب 1</td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">9:00 ص — 6:00 م</td></tr>
+              <tr><td style="padding:8px;border-bottom:1px solid var(--border);"><span class="shift-cell s22">22</span></td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;">مكتب 2</td><td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">8:00 ص — 5:00 م</td></tr>
+              <tr><td style="padding:8px;"><span class="shift-cell sx">X</span></td><td style="padding:8px;font-size:12px;">أوف / راحة</td><td style="padding:8px;font-size:12px;color:var(--text3);">يوم راحة</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROSTER -->
+    <div class="page" id="pg-roster">
+      <div id="roster-empty" class="empty"><div class="empty-icon">📅</div><div class="empty-title">ارفع الروستر أولاً</div></div>
+      <div id="roster-content" style="display:none;">
+        <div class="frow">
+          <select class="fsel2" id="rosterFilter" onchange="renderRoster()">
+            <option value="all">كل الفريق</option>
+            <option value="59">شيفت صباحي (59)</option>
+            <option value="58">شيفت مسائي (58)</option>
+            <option value="30">شيفت ليلي (30)</option>
+            <option value="26">مكتب (26/22)</option>
+          </select>
+          <div style="font-size:11px;color:var(--text3);padding:7px 0;">المربعات الملونة بالأصفر = اليوم الحالي &nbsp;|&nbsp; <span style="color:var(--green);">سنوي</span> = إجازة سنوية &nbsp;|&nbsp; <span style="color:var(--purple);">مرضي</span> = مرضية &nbsp;|&nbsp; <span style="color:var(--red);">طارئ</span> = طارئة</div>
+        </div>
+        <div class="sc">
+          <div class="sc-head"><div class="sc-title">📅 جدول الدوام الشهري</div><span id="rosterCount" style="font-size:11px;color:var(--text3);"></span></div>
+          <div class="roster-wrap" id="rosterWrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPLOYEE -->
+    <div class="page" id="pg-employee">
+      <div id="emp-empty" class="empty"><div class="empty-icon">👤</div><div class="empty-title">ارفع الروستر أولاً</div></div>
+      <div id="emp-content" style="display:none;">
+        <div class="frow" style="margin-bottom:18px;">
+          <select class="fsel2" id="empSel" onchange="renderEmployee()" style="min-width:240px;">
+            <option value="">اختر موظف...</option>
+          </select>
+        </div>
+        <div id="empProfile"></div>
+      </div>
+    </div>
+
+    <!-- BUILDER PAGE -->
+    <div class="page" id="pg-builder">
+      <div id="builder-empty" class="empty">
+        <div class="empty-icon">🛠️</div>
+        <div class="empty-title">يجب رفع روستر أولاً كأساس</div>
+        <div style="font-size:12px;margin-bottom:4px;">الروستر الجديد يُنشأ استناداً لبيانات الفريق المحمّل</div>
+        <button class="go-btn" onclick="nav('upload',document.querySelectorAll('.nav-item')[1])">⬆ رفع الروستر</button>
+      </div>
+      <div id="builder-content" style="display:none;">
+
+        <!-- Settings Tabs -->
+        <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;flex-wrap:wrap;">
+          <button class="stab active" onclick="showStab('s-basic',this)">⚙️ الأساسية</button>
+          <button class="stab" onclick="showStab('s-shifts',this)">🕐 الشيفتات</button>
+          <button class="stab" onclick="showStab('s-staff',this)">👥 الموظفون</button>
+          <button class="stab" onclick="showStab('s-ranks',this)">⭐ الترقيات</button>
+        </div>
+
+        <!-- TAB: Basic -->
+        <div id="s-basic" class="stab-panel">
+          <div class="sc" style="margin-bottom:14px;">
+            <div class="sc-head"><div class="sc-title">📅 الشهر ونمط الراحة</div></div>
+            <div class="sc-body">
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+                <div>
+                  <div class="set-label">الشهر</div>
+                  <select class="fsel" id="bldMonth" style="width:100%;">
+                    <option value="5">يونيو 2026</option>
+                    <option value="6">يوليو 2026</option>
+                    <option value="7">أغسطس 2026</option>
+                    <option value="8">سبتمبر 2026</option>
+                    <option value="9">أكتوبر 2026</option>
+                  </select>
+                </div>
+                <div>
+                  <div class="set-label">نمط أيام العمل والراحة</div>
+                  <select class="fsel" id="bldWorkPattern" style="width:100%;">
+                    <option value="5-2">5 عمل + 2 راحة</option>
+                    <option value="6-1">6 عمل + 1 راحة</option>
+                    <option value="4-2">4 عمل + 2 راحة</option>
+                  </select>
+                </div>
+                <div>
+                  <div class="set-label">شيفت الليل (كود 30)</div>
+                  <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+                    <label class="toggle-wrap">
+                      <input type="checkbox" id="bldNightEnabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <span id="nightToggleLabel" style="font-size:12px;color:var(--text3);">معطّل</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Shifts Minimums -->
+        <div id="s-shifts" class="stab-panel" style="display:none;">
+          <div class="sc" style="margin-bottom:14px;">
+            <div class="sc-head"><div class="sc-title">🕐 الحد الأدنى لكل شيفت يومياً</div><span style="font-size:11px;color:var(--text3);">النظام يضمن هذا العدد كل يوم</span></div>
+            <div class="sc-body">
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+                <div style="background:var(--bg3);border:1px solid rgba(79,124,255,.2);border-radius:10px;padding:14px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span class="shift-cell s59">59</span>
+                    <span style="font-size:12px;font-weight:600;color:var(--s59);">صباحي</span>
+                  </div>
+                  <div class="set-label">الحد الأدنى / يوم</div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                    <button onclick="adjustMin('min59',-1)" class="num-btn">−</button>
+                    <span id="min59" class="num-val">5</span>
+                    <button onclick="adjustMin('min59',1)" class="num-btn">+</button>
+                    <span style="font-size:10px;color:var(--text3);">موظف</span>
+                  </div>
+                </div>
+                <div style="background:var(--bg3);border:1px solid rgba(34,211,165,.2);border-radius:10px;padding:14px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span class="shift-cell s58">58</span>
+                    <span style="font-size:12px;font-weight:600;color:var(--s58);">مسائي</span>
+                  </div>
+                  <div class="set-label">الحد الأدنى / يوم</div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                    <button onclick="adjustMin('min58',-1)" class="num-btn">−</button>
+                    <span id="min58" class="num-val">5</span>
+                    <button onclick="adjustMin('min58',1)" class="num-btn">+</button>
+                    <span style="font-size:10px;color:var(--text3);">موظف</span>
+                  </div>
+                </div>
+                <div style="background:var(--bg3);border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:14px;" id="nightMinCard">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span class="shift-cell s30">30</span>
+                    <span style="font-size:12px;font-weight:600;color:var(--s30);">ليلي</span>
+                  </div>
+                  <div class="set-label">الحد الأدنى / يوم</div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                    <button onclick="adjustMin('min30',-1)" class="num-btn" id="min30Dec">−</button>
+                    <span id="min30" class="num-val">0</span>
+                    <button onclick="adjustMin('min30',1)" class="num-btn" id="min30Inc">+</button>
+                    <span style="font-size:10px;color:var(--text3);">موظف</span>
+                  </div>
+                  <div style="font-size:10px;color:var(--text3);margin-top:6px;" id="nightDisabledNote">⚠ فعّل شيفت الليل من الإعدادات الأساسية</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Staff Settings -->
+        <div id="s-staff" class="stab-panel" style="display:none;">
+          <div class="sc" style="margin-bottom:14px;">
+            <div class="sc-head"><div class="sc-title">👥 إعدادات الموظفين — ثابت / متغير / شيفت مخصص</div></div>
+            <div class="sc-body">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px 12px;background:rgba(79,124,255,.05);border-radius:8px;border:1px solid rgba(79,124,255,.15);">
+                💡 المشرفون الستة ثابتون تلقائياً. يمكنك تغيير أي موظف من متغير لثابت أو تحديد شيفته المخصص.
+              </div>
+              <div id="staffSettingsList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Ranks -->
+        <div id="s-ranks" class="stab-panel" style="display:none;">
+          <div class="sc" style="margin-bottom:14px;">
+            <div class="sc-head"><div class="sc-title">⭐ ترقية / تغيير مسمى الموظفين</div></div>
+            <div class="sc-body">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:12px;padding:8px 12px;background:rgba(245,158,11,.05);border-radius:8px;border:1px solid rgba(245,158,11,.15);">
+                💡 التغييرات هنا تنعكس على الروستر الجديد ولوحة التحكم — للترقية الدائمة عدّل ملف Excel.
+              </div>
+              <div id="ranksList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <div style="margin:16px 0;">
+          <button onclick="initBuilder()" style="background:var(--accent);border:none;color:#fff;padding:11px 32px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;letter-spacing:.02em;">
+            🔄 توليد الروستر
+          </button>
+        </div>
+
+        <!-- Stats strip -->
+        <div id="bldStats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+
+        <!-- Builder roster table -->
+        <div class="sc">
+          <div class="sc-head">
+            <div class="sc-title" id="bldTitle">جدول الروستر الجديد</div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="exportRosterExcel()" style="background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.3);color:var(--green);font-size:12px;font-weight:600;padding:6px 14px;border-radius:7px;cursor:pointer;font-family:inherit;">⬇ تحميل Excel</button>
+              <button onclick="loadBuiltRoster()" style="background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.3);color:var(--accent);font-size:12px;font-weight:600;padding:6px 14px;border-radius:7px;cursor:pointer;font-family:inherit;">✓ تحميل كروستر نشط</button>
+            </div>
+          </div>
+          <div style="padding:8px 14px;background:rgba(245,158,11,.05);border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);">
+            💡 اضغط على أي خلية لتغيير الشيفت مباشرة
+          </div>
+          <div class="roster-wrap" id="bldRosterWrap"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── State ──
+let ROSTER = []; // [{id, name, days:[{date,code}]}]
+let DATES = [];  // Excel serials
+let LEAVES = {}; // {empId: [{type, from, to, days, note}]}
+let BLD_ROSTER = []; // built roster data
+let BLD_DATES  = []; // built roster date serials
+
+// ── Shift config ──
+const SHIFTS = {
+  '59': {label:'صباحي',time:'7:00ص — 4:00م',cls:'s59',color:'var(--s59)'},
+  '58': {label:'مسائي',time:'3:00م — 12:00ص',cls:'s58',color:'var(--s58)'},
+  '30': {label:'ليلي',time:'11:00م — 8:00ص',cls:'s30',color:'var(--s30)'},
+  '26': {label:'مكتب 1',time:'9:00ص — 6:00م',cls:'s26',color:'var(--s26)'},
+  '22': {label:'مكتب 2',time:'8:00ص — 5:00م',cls:'s22',color:'var(--s22)'},
+  'X':  {label:'أوف',time:'يوم راحة',cls:'sx',color:'var(--text3)'},
+};
+
+// ── Convert date string to Excel serial ──
+function dateToSerial(dateStr) {
+  if(!dateStr) return null;
+  const d = new Date(dateStr);
+  return Math.round(d.getTime()/86400000 + 25569);
+}
+
+// ── Check if a date serial is within an employee's leaves ──
+function getLeaveOnDate(empId, serial) {
+  const leaves = LEAVES[String(empId)]||[];
+  for(const l of leaves) {
+    const from = dateToSerial(l.from);
+    const to   = dateToSerial(l.to||l.from);
+    if(serial>=from && serial<=to) return l;
+  }
+  return null;
+}
+
+// ── Get effective code (leave overrides original code) ──
+function getEffectiveCode(empId, serial, originalCode) {
+  const leave = getLeaveOnDate(empId, serial);
+  if(!leave) return {code: originalCode, leave: null};
+  return {code: leave.type, leave};
+}
+
+function shiftCell(code, leaveType=null, title='') {
+  // Leave override
+  if(leaveType) {
+    const lmap = {annual:{lbl:'سنوية',abbr:'سنوي'},sick:{lbl:'مرضية',abbr:'مرضي'},emergency:{lbl:'طارئة',abbr:'طارئ'},other:{lbl:'أخرى',abbr:'أخرى'}};
+    const lm = lmap[leaveType]||{lbl:'إجازة',abbr:'إج'};
+    return `<span class="shift-cell leave-${leaveType}" title="إجازة ${lm.lbl}${title?' — '+title:''}">${lm.abbr}</span>`;
+  }
+  const s = SHIFTS[String(code)] || SHIFTS['X'];
+  return `<span class="shift-cell ${s.cls}" title="${s.label} — ${s.time}">${code||'X'}</span>`;
+}
+
+function dateStr(serial) {
+  if(!serial||isNaN(serial)) return '—';
+  const d = new Date((serial-25569)*86400000);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+}
+function dayName(serial) {
+  if(!serial||isNaN(serial)) return '';
+  const d = new Date((serial-25569)*86400000);
+  const ar = ['أح','إث','ثل','أر','خم','جم','سب'];
+  return ar[d.getDay()];
+}
+function isWeekend(serial) {
+  if(!serial||isNaN(serial)) return false;
+  const d = new Date((serial-25569)*86400000);
+  return d.getDay()===5||d.getDay()===6; // Fri/Sat
+}
+function todaySerial() {
+  const now = new Date();
+  return Math.floor((now.getTime()/86400000)+25569);
+}
+
+// ── Navigation ──
+function nav(page, el) {
+  ['dashboard','upload','roster','employee','builder'].forEach(p=>{
+    document.getElementById('pg-'+p).style.display=p===page?'block':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const titles={dashboard:'لوحة التحكم — الروستر',upload:'رفع ملف الروستر',roster:'جدول الدوام الكامل',employee:'ملف الموظف',builder:'🛠️ إنشاء روستر جديد'};
+  document.getElementById('pgTitle').textContent=titles[page]||page;
+  if(page==='roster'&&ROSTER.length) renderRoster();
+  if(page==='employee'&&ROSTER.length) renderEmployee();
+  if(page==='builder'&&ROSTER.length) { document.getElementById('builder-empty').style.display='none'; document.getElementById('builder-content').style.display='block'; initBuilder(); }
+  else if(page==='builder'&&!ROSTER.length) { document.getElementById('builder-empty').style.display='block'; document.getElementById('builder-content').style.display='none'; }
+}
+
+// ── Upload ──
+function setupInput(id) {
+  document.getElementById(id).addEventListener('change', function() {
+    const file = this.files[0];
+    if(!file) return;
+    showStat('⏳','جاري قراءة الملف...',file.name);
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result,{type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws,{header:1});
+        const header = rows[0];
+        // dates start from col index 3
+        const dates = header.slice(3).map(Number).filter(n=>n>40000);
+        DATES = dates;
+        ROSTER = [];
+        for(let i=1;i<rows.length;i++) {
+          const r = rows[i];
+          if(!r||!r[1]) continue;
+          const days = dates.map((d,idx)=>({date:d, code:String(r[3+idx]||'X').trim()}));
+          ROSTER.push({sr:r[0], id:r[1], name:String(r[2]||'').trim(), days});
+        }
+        if(!ROSTER.length) throw new Error('لا توجد بيانات');
+        showStat('✅',`تم الرفع — ${ROSTER.length} موظف · ${dates.length} يوم`,file.name);
+        document.getElementById('monthLabel').textContent = `${dateStr(dates[0])} — ${dateStr(dates[dates.length-1])}`;
+        buildAll();
+      } catch(err) {
+        showStat('❌','خطأ في قراءة الملف',err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+setupInput('fInput'); setupInput('fInput2');
+document.querySelector('.upload-zone').addEventListener('click',()=>document.getElementById('fInput').click());
+
+function showStat(icon,title,sub) {
+  const bar = document.getElementById('upStat');
+  bar.className = 'upload-status show';
+  document.getElementById('upIcon').textContent = icon;
+  document.getElementById('upTitle').textContent = title;
+  document.getElementById('upSub').textContent = sub;
+}
+
+// ── Build All ──
+function buildAll() {
+  const today = todaySerial();
+
+  // KPIs
+  document.getElementById('kTotal').textContent = ROSTER.length;
+  const workAvg = ROSTER.length ? Math.round(ROSTER.reduce((s,e)=>s+e.days.filter(d=>d.code!=='X').length,0)/ROSTER.length) : 0;
+  const offAvg  = ROSTER.length ? Math.round(ROSTER.reduce((s,e)=>s+e.days.filter(d=>d.code==='X').length,0)/ROSTER.length) : 0;
+  document.getElementById('kWork').textContent = workAvg;
+  document.getElementById('kOff').textContent  = offAvg;
+
+  // Today's shifts
+  const todayIdx = DATES.indexOf(today);
+  if(todayIdx>=0) {
+    const today59 = ROSTER.filter(e=>e.days[todayIdx]?.code==='59').length;
+    const today58 = ROSTER.filter(e=>e.days[todayIdx]?.code==='58').length;
+    document.getElementById('kToday59').textContent = today59;
+    document.getElementById('kToday58').textContent = today58;
+    document.getElementById('todayDateLabel').textContent = dateStr(today) + ' — ' + dayName(today);
+
+    const todayGroups = {};
+    ROSTER.forEach(e=>{
+      const c = e.days[todayIdx]?.code||'X';
+      if(!todayGroups[c]) todayGroups[c]=[];
+      todayGroups[c].push(e.name);
+    });
+    document.getElementById('todayShifts').innerHTML = Object.entries(todayGroups)
+      .sort((a,b)=>a[0]==='X'?1:-1)
+      .map(([code,names])=>{
+        const s=SHIFTS[code]||SHIFTS['X'];
+        return `<div style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            ${shiftCell(code)}
+            <span style="font-size:12px;font-weight:600;color:${s.color};">${s.label}</span>
+            <span style="font-size:10px;color:var(--text3);">${s.time}</span>
+            <span style="margin-right:auto;font-family:monospace;font-weight:700;color:${s.color};">${names.length}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            ${names.map(n=>`<span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;">${n.split(' ')[0]+' '+n.split(' ')[1]}</span>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+  } else {
+    document.getElementById('kToday59').textContent = '—';
+    document.getElementById('kToday58').textContent = '—';
+    document.getElementById('todayShifts').innerHTML = '<div style="color:var(--text3);font-size:12px;">اليوم خارج نطاق هذا الروستر</div>';
+  }
+
+  // Shift distribution
+  const totals = {'59':0,'58':0,'30':0,'26':0,'22':0,'X':0};
+  ROSTER.forEach(e=>e.days.forEach(d=>{ if(totals[d.code]!==undefined) totals[d.code]++; else totals['X']++; }));
+  const grandTotal = Object.values(totals).reduce((a,b)=>a+b,0)||1;
+  document.getElementById('shiftDist').innerHTML = Object.entries(totals)
+    .filter(([,v])=>v>0)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([code,cnt])=>{
+      const s=SHIFTS[code]||SHIFTS['X'];
+      return `<div class="bar-wrap">
+        <div class="bar-lbl">
+          <span style="display:flex;align-items:center;gap:6px;">${shiftCell(code)} <span style="color:${s.color};font-weight:600;">${s.label}</span></span>
+          <span style="font-family:monospace;font-weight:700;">${cnt} <span style="color:var(--text3);font-weight:400;">(${Math.round(cnt/grandTotal*100)}%)</span></span>
+        </div>
+        <div class="bar-t"><div class="bar-f" style="width:${cnt/grandTotal*100}%;background:${s.color};"></div></div>
+      </div>`;
+    }).join('');
+
+  // Summary table
+  document.getElementById('summaryTableBody').innerHTML = ROSTER.map(e=>{
+    const cnt = code => e.days.filter(d=>d.code===code).length;
+    const work = e.days.filter(d=>d.code!=='X').length;
+    const off  = e.days.filter(d=>d.code==='X').length;
+    const s59=cnt('59'), s58=cnt('58'), s30=cnt('30'), s26=cnt('26')+cnt('22');
+    const dominant = [['59',s59],['58',s58],['30',s30],['26',s26]].sort((a,b)=>b[1]-a[1])[0];
+    const ds = SHIFTS[dominant[0]]||SHIFTS['X'];
+    return `<tr>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500;">${e.name} <span style="color:var(--text3);font-size:10px;font-family:monospace;">#${e.id}</span></td>
+      <td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-family:monospace;font-weight:700;color:var(--green);">${work}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-family:monospace;color:var(--text3);">${off}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-family:monospace;color:var(--s59);">${s59||'—'}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-family:monospace;color:var(--s58);">${s58||'—'}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-family:monospace;color:var(--s30);">${s30||'—'}</td>
+      <td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-family:monospace;color:var(--s26);">${s26||'—'}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--border);text-align:center;">${shiftCell(dominant[0])} <span style="font-size:10px;color:${ds.color};margin-right:4px;">${ds.label}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Populate employee selector
+  const empSel = document.getElementById('empSel');
+  empSel.innerHTML = '<option value="">اختر موظف...</option>' +
+    ROSTER.map(e=>`<option value="${e.id}">${e.name} (#${e.id})</option>`).join('');
+
+  // Show all
+  ['dash','roster','emp'].forEach(p=>{
+    const em=document.getElementById(p+'-empty');
+    const co=document.getElementById(p+'-content');
+    if(em) em.style.display='none';
+    if(co) co.style.display='block';
+  });
+  // Builder
+  document.getElementById('builder-empty').style.display='none';
+  document.getElementById('builder-content').style.display='block';
+  populateBuilderTabs();
+}
+
+// ── Roster Table ──
+function renderRoster() {
+  const filter = document.getElementById('rosterFilter').value;
+  const today  = todaySerial();
+  let list = ROSTER;
+  if(filter==='59') list=ROSTER.filter(e=>e.days.some(d=>d.code==='59'));
+  else if(filter==='58') list=ROSTER.filter(e=>e.days.some(d=>d.code==='58'));
+  else if(filter==='30') list=ROSTER.filter(e=>e.days.some(d=>d.code==='30'));
+  else if(filter==='26') list=ROSTER.filter(e=>e.days.some(d=>d.code==='26'||d.code==='22'));
+  document.getElementById('rosterCount').textContent=`${list.length} موظف`;
+
+  const days = ['أح','إث','ثل','أر','خم','جم','سب'];
+  const headerCells = DATES.map((d,i)=>{
+    const isToday = d===today;
+    const isWE = isWeekend(d);
+    const dt = new Date((d-25569)*86400000);
+    return `<th style="min-width:36px;padding:5px 3px;${isToday?'color:var(--amber);':''}${isWE?'opacity:.6;':''}">${isToday?'⭐':''}<span class="day-num">${dt.getDate()}</span><span class="day-name">${days[dt.getDay()]}</span></th>`;
+  }).join('');
+
+  const rows = list.map(e=>`
+    <tr>
+      <td class="name-col">${e.name} <span style="font-size:10px;color:var(--text3);font-family:monospace;">#${e.id}</span></td>
+      ${e.days.map((d,i)=>{
+        const serial  = DATES[i];
+        const isToday = serial===today;
+        const eff = getEffectiveCode(e.id, serial, d.code);
+        const cell = eff.leave ? shiftCell(null, eff.code, eff.leave.note) : shiftCell(d.code);
+        const bg = eff.leave ? 'background:rgba(34,211,165,.05);' : isToday ? 'background:rgba(245,158,11,.05);' : '';
+        return `<td style="padding:3px;text-align:center;${bg}">${cell}</td>`;
+      }).join('')}
+    </tr>`).join('');
+
+  document.getElementById('rosterWrap').innerHTML=`
+    <table class="roster-table">
+      <thead><tr><th class="name-col">الموظف</th>${headerCells}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Employee Profile ──
+function renderEmployee() {
+  const empId = document.getElementById('empSel').value;
+  if(!empId) { document.getElementById('empProfile').innerHTML=''; return; }
+  const e = ROSTER.find(r=>String(r.id)===String(empId));
+  if(!e) return;
+  const today = todaySerial();
+  const todayIdx = DATES.indexOf(today);
+
+  const cnt = code => e.days.filter(d=>d.code===code).length;
+  const work = e.days.filter(d=>d.code!=='X').length;
+  const off  = e.days.filter(d=>d.code==='X').length;
+  const s59=cnt('59'), s58=cnt('58'), s30=cnt('30'), s26=cnt('26')+cnt('22');
+  const dominant = [['59',s59],['58',s58],['30',s30],['26',s26]].sort((a,b)=>b[1]-a[1])[0];
+  const ds = SHIFTS[dominant[0]]||SHIFTS['X'];
+
+  // Today's shift
+  const todayCode = todayIdx>=0 ? e.days[todayIdx]?.code : null;
+  const todayShift = todayCode ? (SHIFTS[todayCode]||SHIFTS['X']) : null;
+
+  // Leaves for this employee
+  const leaves = LEAVES[empId]||[];
+  const totalLeave = leaves.filter(l=>l.type==='annual').reduce((s,l)=>s+l.days,0);
+  const totalSick  = leaves.filter(l=>l.type==='sick').reduce((s,l)=>s+l.days,0);
+
+  // Get initials
+  const initials = e.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+
+  document.getElementById('empProfile').innerHTML=`
+    <div class="emp-card">
+      <div class="emp-header">
+        <div class="emp-avatar">${initials}</div>
+        <div style="flex:1;">
+          <div class="emp-name">${e.name}</div>
+          <div class="emp-id">#${e.id}</div>
+          ${todayShift?`<div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;color:var(--text3);">شيفت اليوم:</span>
+            ${shiftCell(todayCode)}
+            <span style="font-size:12px;font-weight:600;color:${todayShift.color};">${todayShift.label}</span>
+            <span style="font-size:11px;color:var(--text3);">${todayShift.time}</span>
+          </div>`:''}
+          <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;color:var(--text3);">الشيفت الغالب:</span>
+            ${shiftCell(dominant[0])}
+            <span style="font-size:12px;font-weight:600;color:${ds.color};">${ds.label}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-val" style="color:var(--green);">${work}</div><div class="stat-lbl">أيام عمل</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--text3);">${off}</div><div class="stat-lbl">أيام راحة</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--green);">${totalLeave}</div><div class="stat-lbl">إجازة سنوية</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--purple);">${totalSick}</div><div class="stat-lbl">إجازة مرضية</div></div>
+      </div>
+
+      <!-- Mini breakdown -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        ${[['59',s59,'صباحي'],['58',s58,'مسائي'],['30',s30,'ليلي'],['26',s26,'مكتب']].filter(([,v])=>v>0).map(([code,cnt,lbl])=>`
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;min-width:70px;">
+            ${shiftCell(code)}
+            <div style="font-size:14px;font-weight:700;font-family:monospace;color:${SHIFTS[code].color};margin-top:3px;">${cnt}</div>
+            <div style="font-size:10px;color:var(--text3);">${lbl}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Mini roster -->
+      <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">جدول الشهر</div>
+      <div style="overflow-x:auto;margin-bottom:16px;">
+        <div style="display:flex;gap:3px;min-width:max-content;">
+          ${e.days.map((d,i)=>{
+            const serial  = DATES[i];
+            const isToday = serial===today;
+            const dt = new Date((serial-25569)*86400000);
+            const eff = getEffectiveCode(e.id, serial, d.code);
+            const cell = eff.leave ? shiftCell(null, eff.code, eff.leave.note) : shiftCell(d.code);
+            return `<div style="text-align:center;">
+              <div style="font-size:9px;color:${isToday?'var(--amber)':'var(--text3)'};margin-bottom:2px;font-weight:${isToday?700:400};">${dt.getDate()}</div>
+              ${cell}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Leave management -->
+      <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">الإجازات والسكليف</div>
+      ${leaves.length>0?leaves.map((l,idx)=>`
+        <div class="leave-item">
+          <span class="leave-type-badge lt-${l.type}">${{annual:'سنوية',sick:'مرضية',emergency:'طارئة',other:'أخرى'}[l.type]}</span>
+          <span style="font-family:monospace;font-size:11px;">${l.from}${l.to&&l.to!==l.from?' — '+l.to:''}</span>
+          <span style="color:var(--text3);font-size:11px;">${l.days} يوم</span>
+          ${l.note?`<span style="color:var(--text2);font-size:11px;">${l.note}</span>`:''}
+          <button class="del-btn" onclick="deleteLeave('${empId}',${idx})">✕</button>
+        </div>`).join(''):'<div style="color:var(--text3);font-size:12px;margin-bottom:10px;">لا توجد إجازات مسجلة</div>'}
+
+      <div class="leave-form">
+        <div class="leave-form-title">+ إضافة إجازة / سكليف</div>
+        <div class="form-row">
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">النوع</div>
+            <select class="fsel" id="leaveType_${empId}">
+              <option value="annual">إجازة سنوية</option>
+              <option value="sick">إجازة مرضية</option>
+              <option value="emergency">طارئة</option>
+              <option value="other">أخرى</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">من تاريخ</div>
+            <input type="date" class="finp" id="leaveFrom_${empId}">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">إلى تاريخ</div>
+            <input type="date" class="finp" id="leaveTo_${empId}">
+          </div>
+          <div>
+            <button class="add-btn" onclick="addLeave('${empId}')">+ إضافة</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">ملاحظة (اختياري)</div>
+          <input type="text" class="finp" id="leaveNote_${empId}" placeholder="سبب الإجازة أو أي ملاحظة...">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Leave Management ──
+function addLeave(empId) {
+  const type  = document.getElementById(`leaveType_${empId}`).value;
+  const from  = document.getElementById(`leaveFrom_${empId}`).value;
+  const to    = document.getElementById(`leaveTo_${empId}`).value||from;
+  const note  = document.getElementById(`leaveNote_${empId}`).value;
+  if(!from) { alert('حدد تاريخ البداية'); return; }
+  const d1=new Date(from), d2=new Date(to);
+  const days=Math.max(1,Math.round((d2-d1)/86400000)+1);
+  if(!LEAVES[empId]) LEAVES[empId]=[];
+  LEAVES[empId].push({type,from,to,days,note});
+  renderEmployee();
+  // refresh roster table if visible
+  const rosterContent = document.getElementById('roster-content');
+  if(rosterContent && rosterContent.style.display!=='none') renderRoster();
+}
+function deleteLeave(empId,idx) {
+  if(!LEAVES[empId]) return;
+  LEAVES[empId].splice(idx,1);
+  renderEmployee();
+  const rosterContent = document.getElementById('roster-content');
+  if(rosterContent && rosterContent.style.display!=='none') renderRoster();
+}
+
+// Init
+document.getElementById('todayDateLabel') && (document.getElementById('todayDateLabel').textContent='');
+
+// ── ROSTER BUILDER ──────────────────────────────────────
+
+const MONTH_NAMES = {5:'يونيو 2026',6:'يوليو 2026',7:'أغسطس 2026',8:'سبتمبر 2026',9:'أكتوبر 2026'};
+
+// Staff overrides: {empId: {fixed:bool, shift:'59'|'58'|'30'|null, role:'supervisor'|'staff'}}
+let STAFF_CFG = {};
+// Rank overrides: {empId: {role:'supervisor'|'staff', label:''}}
+let RANK_CFG  = {};
+
+// ── Settings Tabs ──
+function showStab(id, btn) {
+  document.querySelectorAll('.stab-panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).style.display='block';
+  btn.classList.add('active');
+}
+
+// ── Night toggle ──
+document.addEventListener('DOMContentLoaded', ()=>{
+  const tog = document.getElementById('bldNightEnabled');
+  if(tog) tog.addEventListener('change', function(){
+    const on = this.checked;
+    document.getElementById('nightToggleLabel').textContent = on ? 'مفعّل' : 'معطّل';
+    document.getElementById('nightToggleLabel').style.color = on ? 'var(--green)' : 'var(--text3)';
+    document.getElementById('min30Dec').disabled = !on;
+    document.getElementById('min30Inc').disabled = !on;
+    document.getElementById('nightDisabledNote').style.display = on ? 'none' : 'block';
+    if(!on) document.getElementById('min30').textContent = '0';
+  });
+});
+
+// ── Number adjusters ──
+function adjustMin(id, delta) {
+  const el = document.getElementById(id);
+  const cur = parseInt(el.textContent)||0;
+  el.textContent = Math.max(0, cur + delta);
+}
+
+// ── Populate Staff Settings tab ──
+function populateStaffSettings() {
+  const supIds = Object.keys(FIXED_SUPERVISORS).map(Number);
+  const html = ROSTER.map(e=>{
+    const isSup = supIds.includes(e.id);
+    const cfg = STAFF_CFG[e.id] || {};
+    const fixed = cfg.fixed !== undefined ? cfg.fixed : isSup;
+    const shift = cfg.shift || (isSup ? FIXED_SUPERVISORS[e.id]?.shift : getDominantShift(e));
+    const role  = RANK_CFG[e.id]?.role || (isSup ? 'supervisor' : 'staff');
+    return `<div class="staff-set-row">
+      <div style="flex:1;min-width:160px;">
+        <div class="staff-set-name">${e.name.split(' ').slice(0,3).join(' ')}</div>
+        <div class="staff-set-id">#${e.id}</div>
+      </div>
+      <span class="role-badge ${role==='supervisor'?'role-sup':'role-staff'}">${role==='supervisor'?'مشرف':'موظف'}</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:11px;color:var(--text3);">ثابت:</span>
+        <label class="toggle-wrap" style="width:34px;height:19px;">
+          <input type="checkbox" ${fixed?'checked':''} onchange="setCfg(${e.id},'fixed',this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:11px;color:var(--text3);">شيفت:</span>
+        <select class="fsel" style="padding:4px 8px;font-size:11px;" onchange="setCfg(${e.id},'shift',this.value)">
+          <option value="59" ${shift==='59'?'selected':''}>59 صباحي</option>
+          <option value="58" ${shift==='58'?'selected':''}>58 مسائي</option>
+          <option value="30" ${shift==='30'?'selected':''}>30 ليلي</option>
+          <option value="26" ${shift==='26'?'selected':''}>26 مكتب</option>
+          <option value="22" ${shift==='22'?'selected':''}>22 مكتب2</option>
+          <option value="auto" ${shift==='auto'||!shift?'selected':''}>تلقائي (دوري)</option>
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('staffSettingsList').innerHTML = html;
+}
+
+function setCfg(empId, key, val) {
+  if(!STAFF_CFG[empId]) STAFF_CFG[empId] = {};
+  STAFF_CFG[empId][key] = val;
+}
+
+// ── Populate Ranks tab ──
+function populateRanks() {
+  const supIds = Object.keys(FIXED_SUPERVISORS).map(Number);
+  const html = ROSTER.map(e=>{
+    const cur = RANK_CFG[e.id] || {role: supIds.includes(e.id)?'supervisor':'staff', label: e.name};
+    return `<div class="rank-row">
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:500;">${e.name.split(' ').slice(0,3).join(' ')}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:monospace;">#${e.id}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--text3);">المسمى:</span>
+        <select class="fsel" style="padding:4px 8px;font-size:11px;" onchange="setRank(${e.id},'role',this.value)">
+          <option value="staff" ${cur.role==='staff'?'selected':''}>موظف</option>
+          <option value="supervisor" ${cur.role==='supervisor'?'selected':''}>مشرف</option>
+          <option value="tl" ${cur.role==='tl'?'selected':''}>Team Leader</option>
+          <option value="senior" ${cur.role==='senior'?'selected':''}>Senior</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--text3);">ملاحظة:</span>
+        <input type="text" class="finp" style="width:120px;padding:4px 8px;font-size:11px;" value="${cur.note||''}" placeholder="ترقية، نقل..." oninput="setRank(${e.id},'note',this.value)">
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('ranksList').innerHTML = html;
+}
+
+function setRank(empId, key, val) {
+  if(!RANK_CFG[empId]) RANK_CFG[empId] = {};
+  RANK_CFG[empId][key] = val;
+}
+
+// Show staff/rank tabs when ROSTER is loaded
+function populateBuilderTabs() {
+  if(ROSTER.length) { populateStaffSettings(); populateRanks(); }
+}
+
+
+
+const FIXED_SUPERVISORS = {
+  10546: {shift:'59', role:'مشرف محطات صباح',   offCycle:'A'},
+  10664: {shift:'59', role:'مشرف تذاكر صباح 1', offCycle:'A'},
+  10090: {shift:'59', role:'مشرف تذاكر صباح 2', offCycle:'B'},
+  10093: {shift:'58', role:'مشرف محطات مساء',   offCycle:'A'},
+  10171: {shift:'58', role:'مشرف تذاكر مساء 1', offCycle:'A'},
+  12272: {shift:'58', role:'مشرف تذاكر مساء 2', offCycle:'B'},
+};
+
+function getDominantShift(emp) {
+  const cnt = {};
+  emp.days.forEach(d=>{ if(d.code!=='X') cnt[d.code]=(cnt[d.code]||0)+1; });
+  const top = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+  return top?.[0]||'59';
+}
+
+function buildMonthDates(monthOffset) {
+  const year = 2026, month = monthOffset + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const serials = [];
+  for(let d=1;d<=daysInMonth;d++){
+    const dt = new Date(year, month-1, d);
+    serials.push(Math.round(dt.getTime()/86400000+25569));
+  }
+  return serials;
+}
+
+function getRotationShift(prevShift, dIdx, mIdx) {
+  // Every 14 days, swap morning↔evening
+  // mIdx adds offset so June starts where May left off
+  const block = Math.floor((dIdx + mIdx * 14) / 14);
+  if(prevShift === '59') return (block % 2 === 0) ? '59' : '58';
+  if(prevShift === '58') return (block % 2 === 0) ? '58' : '59';
+  return prevShift; // office/other stays fixed
+}
+
+// Generate off days: 5 work + 2 off pattern, staggered per employee
+function isOffDay5x2(dIdx, empOffset) {
+  return ((dIdx + empOffset) % 7) >= 5;
+}
+
+// Ensure at least one supervisor per shift per day — fix if gap found
+function ensureCoverage() {
+  const mSups = [10546, 10664, 10090]; // morning supervisors
+  const eSups = [10093, 10171, 12272]; // evening supervisors
+  // IDs of the "backup" supervisor (always forced on if no coverage)
+  const mBackup = 10546; // Saqer — stations morning
+  const eBackup = 10093; // Anwar — stations evening
+
+  BLD_DATES.forEach((serial, dIdx) => {
+    // Morning coverage
+    const mOn = BLD_ROSTER.filter(e => mSups.includes(e.id) && e.days[dIdx]?.code === '59');
+    if(!mOn.length) {
+      const s = BLD_ROSTER.find(e => e.id === mBackup);
+      if(s) s.days[dIdx].code = '59';
+    }
+    // Evening coverage — ensure at least one ticket supervisor on evening
+    const eOn = BLD_ROSTER.filter(e => [10171,12272].includes(e.id) && e.days[dIdx]?.code === '58');
+    if(!eOn.length) {
+      // alternate between 10171 and 12272 to keep it fair
+      const pick = (dIdx % 2 === 0) ? 10171 : 12272;
+      const s = BLD_ROSTER.find(e => e.id === pick);
+      if(s) s.days[dIdx].code = '58';
+    }
+    // Morning ticket supervisor
+    const mTicket = BLD_ROSTER.filter(e => [10664,10090].includes(e.id) && e.days[dIdx]?.code === '59');
+    if(!mTicket.length) {
+      const pick = (dIdx % 2 === 0) ? 10664 : 10090;
+      const s = BLD_ROSTER.find(e => e.id === pick);
+      if(s) s.days[dIdx].code = '59';
+    }
+  });
+}
+
+function initBuilder() {
+  if(!ROSTER.length) return;
+  const monthOff     = parseInt(document.getElementById('bldMonth').value)||5;
+  const workPattern  = document.getElementById('bldWorkPattern').value;
+  const nightEnabled = document.getElementById('bldNightEnabled').checked;
+  const min59  = parseInt(document.getElementById('min59').textContent)||0;
+  const min58  = parseInt(document.getElementById('min58').textContent)||0;
+  const min30  = nightEnabled ? (parseInt(document.getElementById('min30').textContent)||0) : 0;
+  const [workDays, offDays] = workPattern.split('-').map(Number);
+  const cycleLen = workDays + offDays;
+
+  BLD_DATES = buildMonthDates(monthOff);
+  const monthName = MONTH_NAMES[monthOff]||'الشهر القادم';
+  document.getElementById('bldTitle').textContent = `روستر ${monthName}`;
+  const mIdx = monthOff - 5;
+
+  const supOff = {10546:1, 10664:0, 10090:3, 10093:2, 10171:0, 12272:3};
+
+  BLD_ROSTER = ROSTER.map((emp, empIdx) => {
+    const fixed   = FIXED_SUPERVISORS[emp.id];
+    const cfg     = STAFF_CFG[emp.id] || {};
+    const prevShift = getDominantShift(emp);
+
+    // Determine if fixed or rotating
+    const isFixed   = cfg.fixed !== undefined ? cfg.fixed : !!fixed;
+    // Determine assigned shift
+    let assignedShift = cfg.shift && cfg.shift !== 'auto'
+      ? cfg.shift
+      : fixed ? fixed.shift : null;
+
+    // Off-day offset
+    const offOffset = supOff[emp.id] !== undefined
+      ? supOff[emp.id]
+      : (empIdx % cycleLen);
+
+    const days = BLD_DATES.map((serial, dIdx) => {
+      // Is this an off day? (cyclic: offDays out of every cycleLen days)
+      const isOff = ((dIdx + offOffset) % cycleLen) >= workDays;
+      if(isOff) return {date: serial, code: 'X'};
+
+      let code;
+      if(isFixed && assignedShift) {
+        code = assignedShift;
+      } else if(prevShift==='26'||prevShift==='22') {
+        code = prevShift;
+      } else if(nightEnabled && prevShift==='30') {
+        code = '30';
+      } else {
+        // Rotating: morning↔evening every 2 weeks
+        code = getRotationShift(prevShift==='30'?'59':prevShift, dIdx, mIdx);
+      }
+      return {date: serial, code};
+    });
+    return {id: emp.id, name: emp.name, days};
+  });
+
+  // Coverage guarantee
+  ensureCoverage();
+
+  // Enforce minimums — if any day is below minimum, pull from X employees
+  BLD_DATES.forEach((_, dIdx) => {
+    ['59','58'].forEach((shift, si) => {
+      const minVal = si===0 ? min59 : min58;
+      const working = BLD_ROSTER.filter(e=>e.days[dIdx]?.code===shift);
+      if(working.length < minVal) {
+        // Find off employees not fixed in opposite shift
+        const offEmps = BLD_ROSTER.filter(e=>
+          e.days[dIdx]?.code==='X' &&
+          !Object.keys(FIXED_SUPERVISORS).map(Number).includes(e.id) &&
+          !STAFF_CFG[e.id]?.fixed
+        );
+        const needed = minVal - working.length;
+        offEmps.slice(0, needed).forEach(e=>{ e.days[dIdx].code = shift; });
+      }
+    });
+    if(nightEnabled && min30>0) {
+      const nightWorking = BLD_ROSTER.filter(e=>e.days[dIdx]?.code==='30');
+      if(nightWorking.length < min30) {
+        const offEmps = BLD_ROSTER.filter(e=>
+          e.days[dIdx]?.code==='X' &&
+          !Object.keys(FIXED_SUPERVISORS).map(Number).includes(e.id)
+        );
+        offEmps.slice(0, min30-nightWorking.length).forEach(e=>{ e.days[dIdx].code='30'; });
+      }
+    }
+  });
+
+  // Stats
+  const totalWork = BLD_ROSTER.reduce((s,e)=>s+e.days.filter(d=>d.code!=='X').length,0);
+  const avgWork   = Math.round(totalWork/BLD_ROSTER.length);
+  const count59   = BLD_ROSTER.reduce((s,e)=>s+e.days.filter(d=>d.code==='59').length,0);
+  const count58   = BLD_ROSTER.reduce((s,e)=>s+e.days.filter(d=>d.code==='58').length,0);
+  const count30   = BLD_ROSTER.reduce((s,e)=>s+e.days.filter(d=>d.code==='30').length,0);
+  const mTicketCov = BLD_DATES.filter((_,i)=>BLD_ROSTER.some(e=>[10664,10090].includes(e.id)&&e.days[i]?.code==='59')).length;
+  const eTicketCov = BLD_DATES.filter((_,i)=>BLD_ROSTER.some(e=>[10171,12272].includes(e.id)&&e.days[i]?.code==='58')).length;
+
+  document.getElementById('bldStats').innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 13px;display:flex;gap:6px;align-items:center;font-size:11px;"><span style="color:var(--text3);">📅 الأيام:</span><strong style="font-family:monospace;">${BLD_DATES.length}</strong></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 13px;display:flex;gap:6px;align-items:center;font-size:11px;"><span style="color:var(--green);">✓ متوسط عمل:</span><strong style="font-family:monospace;color:var(--green);">${avgWork}</strong></div>
+    <div style="background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.2);border-radius:8px;padding:9px 13px;display:flex;gap:6px;align-items:center;font-size:11px;"><span class="shift-cell s59" style="width:22px;height:20px;font-size:9px;">59</span><span style="color:var(--accent);">${count59} دوام صباحي</span></div>
+    <div style="background:rgba(34,211,165,.08);border:1px solid rgba(34,211,165,.2);border-radius:8px;padding:9px 13px;display:flex;gap:6px;align-items:center;font-size:11px;"><span class="shift-cell s58" style="width:22px;height:20px;font-size:9px;">58</span><span style="color:var(--green);">${count58} دوام مسائي</span></div>
+    ${nightEnabled?`<div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:8px;padding:9px 13px;display:flex;gap:6px;align-items:center;font-size:11px;"><span class="shift-cell s30" style="width:22px;height:20px;font-size:9px;">30</span><span style="color:var(--purple);">${count30} دوام ليلي</span></div>`:''}
+    <div style="background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.2);border-radius:8px;padding:9px 13px;display:flex;gap:6px;align-items:center;font-size:11px;"><span style="color:var(--accent);">🔒 تغطية مشرف صباح:</span><strong style="font-family:monospace;color:var(--accent);">${mTicketCov}/${BLD_DATES.length}</strong></div>
+    <div style="background:rgba(34,211,165,.08);border:1px solid rgba(34,211,165,.2);border-radius:8px;padding:9px 13px;display:flex;gap:6px;align-items:center;font-size:11px;"><span style="color:var(--green);">🔒 تغطية مشرف مساء:</span><strong style="font-family:monospace;color:var(--green);">${eTicketCov}/${BLD_DATES.length}</strong></div>
+  `;
+
+  renderBuilderTable();
+}
+
+function renderBuilderTable() {
+  if(!BLD_ROSTER.length||!BLD_DATES.length) return;
+  const dayAr=['أح','إث','ثل','أر','خم','جم','سب'];
+  const headerCells=BLD_DATES.map(serial=>{
+    const dt=new Date((serial-25569)*86400000);
+    const isWE=dt.getDay()===5||dt.getDay()===6;
+    return `<th style="min-width:36px;padding:5px 3px;${isWE?'opacity:.45;':""}"><span class="day-num">${dt.getDate()}</span><span class="day-name">${dayAr[dt.getDay()]}</span></th>`;
+  }).join('');
+
+  const supIds=Object.keys(FIXED_SUPERVISORS).map(Number);
+  const sups=BLD_ROSTER.filter(e=>supIds.includes(e.id));
+  const staff=BLD_ROSTER.filter(e=>!supIds.includes(e.id));
+
+  const makeRow=(emp)=>{
+    const realIdx=BLD_ROSTER.findIndex(r=>r.id===emp.id);
+    const fixed=FIXED_SUPERVISORS[emp.id];
+    const roleLabel=fixed?`<span style="background:rgba(245,158,11,.15);color:var(--amber);padding:1px 5px;border-radius:4px;font-size:9px;margin-left:3px;">🔒${fixed.shift==='59'?'ص':'م'}</span>`:'';
+    return `<tr>
+      <td class="name-col">${roleLabel}<span style="font-size:12px;font-weight:${fixed?700:500};">${emp.name.split(' ').slice(0,3).join(' ')}</span><div style="font-size:9px;color:var(--text3);font-family:monospace;">#${emp.id}</div></td>
+      ${emp.days.map((d,dIdx)=>{
+        const dt=new Date((BLD_DATES[dIdx]-25569)*86400000);
+        const isWE=dt.getDay()===5||dt.getDay()===6;
+        const wkBorder=dt.getDate()%14===1||dt.getDate()===1?'border-right:2px solid rgba(99,130,255,.2);':'';
+        return `<td style="padding:2px;text-align:center;${isWE?'opacity:.45;':''}${wkBorder}" onclick="cycleBldCell(${realIdx},${dIdx},this)" title="${d.code}">${shiftCell(d.code)}</td>`;
+      }).join('')}
+    </tr>`;
+  };
+
+  const sepRow=`<tr><td colspan="${BLD_DATES.length+1}" style="padding:4px 12px;background:var(--bg3);font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;">▸ الفريق المتغير — تبديل كل أسبوعين</td></tr>`;
+  const rows=sups.map(makeRow).join('')+sepRow+staff.map(makeRow).join('');
+
+  const wkHeader=BLD_DATES.map((serial)=>{
+    const dt=new Date((serial-25569)*86400000);
+    return `<th style="font-size:8px;color:var(--text3);padding:2px;text-align:center;opacity:.5;">W${Math.ceil(dt.getDate()/7)}</th>`;
+  }).join('');
+
+  document.getElementById('bldRosterWrap').innerHTML=`
+    <table class="roster-table">
+      <thead>
+        <tr><th class="name-col">الموظف</th>${headerCells}</tr>
+        <tr style="background:var(--bg3);"><th style="font-size:9px;color:var(--text3);padding:2px 12px;">أسبوع</th>${wkHeader}</tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+const SHIFT_CYCLE=['59','58','26','22','X'];
+function cycleBldCell(eIdx,dIdx,td){
+  const cur=BLD_ROSTER[eIdx].days[dIdx].code;
+  const next=SHIFT_CYCLE[(SHIFT_CYCLE.indexOf(cur)+1)%SHIFT_CYCLE.length];
+  BLD_ROSTER[eIdx].days[dIdx].code=next;
+  td.innerHTML=shiftCell(next);
+}
+
+function loadBuiltRoster(){
+  if(!BLD_ROSTER.length) return;
+  ROSTER=BLD_ROSTER.map(e=>({...e,days:e.days.map(d=>({...d}))}));
+  DATES=[...BLD_DATES]; LEAVES={};
+  buildAll();
+  alert('✅ تم تحميل الروستر الجديد كروستر نشط');
+  nav('roster',document.querySelectorAll('.nav-item')[2]);
+}
+
+function exportRosterExcel(){
+  if(!BLD_ROSTER.length) return;
+  const wb=XLSX.utils.book_new();
+  const monthOff=parseInt(document.getElementById('bldMonth').value)||5;
+  const monthName=MONTH_NAMES[monthOff]||'Roster';
+  const header=['SR','ID','STAFF',...BLD_DATES.map(s=>{const d=new Date((s-25569)*86400000);return `${d.getDate()}/${d.getMonth()+1}`;})];
+  const rows=[header,...BLD_ROSTER.map((e,i)=>[i+1,e.id,e.name,...e.days.map(d=>d.code)])];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:5},{wch:8},{wch:24},...BLD_DATES.map(()=>({wch:4}))];
+  XLSX.utils.book_append_sheet(wb,ws,monthName.replace(' ','_'));
+  XLSX.writeFile(wb,`Roster_${monthName.replace(' ','_')}.xlsx`);
+}
+</script>
+</body>
+</html>
