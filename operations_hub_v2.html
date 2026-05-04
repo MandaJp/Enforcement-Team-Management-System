@@ -7,16 +7,14 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root {
-  --bg:#0a0e1a; --bg2:#0f1525; --bg3:#141b2d;
-  --card:#1a2235; --card2:#1e2840;
-  --border:rgba(99,130,255,0.12); --border2:rgba(99,130,255,0.25);
-  --accent:#4f7cff; --accent2:#7c5cfc;
-  --green:#22d3a5; --amber:#f59e0b; --red:#f43f5e; --blue:#38bdf8;
-  --text:#e8eaf0; --text2:#8892aa; --text3:#5a6580;
-  --enforcement:#4f7cff; --stations:#22d3a5; --office:#f59e0b; --supervisor:#7c5cfc;
-  --absent:#f43f5e; --late:#f59e0b; --leave:#38bdf8; --annual:#22d3a5; --sick:#a78bfa; --withdrawn:#6b7280;
-  --r:12px;
+:root{
+  --bg:#050403;--bg2:#0b0906;--bg3:#141006;--card:#17120a;--card2:#211807;
+  --border:rgba(212,175,55,.14);--border2:rgba(212,175,55,.30);--border3:rgba(212,175,55,.50);
+  --accent:#d4af37;--accent2:#f7d774;--accent3:#b8860b;
+  --green:#22d3a5;--amber:#d4af37;--red:#f43f5e;--blue:#d4af37;--purple:#c8a84c;
+  --text:#fff8df;--text2:#c9b77a;--text3:#7d6a33;
+  --gold:#d4af37;--gold2:#f7d774;--gold3:#8a6b15;--black:#050403;
+  --sb-w:86px;--r:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
@@ -29,8 +27,8 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .logo-ver{font-size:9px;color:var(--accent);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
 .nav{padding:14px 0;flex:1;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border-right:2px solid transparent;}
-.nav-item:hover{background:rgba(79,124,255,.06);color:var(--text);}
-.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(79,124,255,.08);}
+.nav-item:hover{background:rgba(212,175,55,.07);color:var(--text);}
+.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(212,175,55,.10);}
 .nav-icon{font-size:15px;width:20px;text-align:center;}
 .sidebar-user{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 .user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
@@ -50,14 +48,14 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .page.active{display:block;}
 
 /* Upload Zone */
-.upload-zone{border:2px dashed var(--border2);border-radius:16px;padding:36px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:22px;background:rgba(79,124,255,.03);}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(79,124,255,.07);}
+.upload-zone{border:2px dashed var(--border2);border-radius:16px;padding:36px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:22px;background:rgba(212,175,55,.04);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(212,175,55,.09);}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .upload-icon{font-size:36px;margin-bottom:10px;}
 .upload-title{font-size:15px;font-weight:600;margin-bottom:4px;}
 .upload-sub{font-size:12px;color:var(--text3);}
 .upload-format{margin-top:10px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;}
-.fmt-tag{background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;}
+.fmt-tag{background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.22);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;}
 
 /* Status bar */
 .upload-status{display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12px;align-items:center;gap:10px;}
@@ -97,7 +95,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .data-table th{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);}
 .data-table td{padding:10px 12px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .data-table tr:last-child td{border-bottom:none;}
-.data-table tr:hover td{background:rgba(79,124,255,.03);}
+.data-table tr:hover td{background:rgba(212,175,55,.04);}
 .mono{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
 
 /* Note badges */
@@ -112,7 +110,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 
 /* Team badge */
 .team-tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;}
-.team-tag.enforcement{background:rgba(79,124,255,.12);color:var(--enforcement);}
+.team-tag.enforcement{background:rgba(212,175,55,.14);color:var(--enforcement);}
 .team-tag.stations{background:rgba(34,211,165,.12);color:var(--stations);}
 .team-tag.office{background:rgba(245,158,11,.12);color:var(--amber);}
 .team-tag.supervisor{background:rgba(124,92,252,.12);color:var(--supervisor);}
@@ -191,7 +189,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .note-row-date{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);min-width:80px;}
 .note-row-text{flex:1;font-size:12px;}
 .note-row-badge{flex-shrink:0;}
-.see-all-btn{width:100%;margin-top:8px;background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.2);color:var(--accent);font-size:12px;font-weight:600;padding:8px;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.see-all-btn{width:100%;margin-top:8px;background:rgba(212,175,55,.10);border:1px solid rgba(212,175,55,.22);color:var(--accent);font-size:12px;font-weight:600;padding:8px;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .15s;}
 .see-all-btn:hover{background:rgba(79,124,255,.18);}
 
 /* warning letter */
@@ -247,9 +245,16 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .profile-action-btn{flex:1;min-width:120px;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;border:1px solid var(--border);background:var(--bg3);color:var(--text2);}
 .profile-action-btn:hover{border-color:var(--border2);color:var(--text);}
 .profile-action-btn.warn{background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.25);color:var(--absent);}
-.profile-action-btn.notes{background:rgba(79,124,255,.08);border-color:rgba(79,124,255,.25);color:var(--accent);}
+.profile-action-btn.notes{background:rgba(212,175,55,.10);border-color:rgba(212,175,55,.28);color:var(--accent);}
 .saved-tag{font-size:10px;color:var(--green);font-weight:600;display:none;}
 .saved-tag.show{display:inline;}
+
+
+/* Premium black & gold overlay */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 16% 5%,rgba(212,175,55,.13),transparent 28%),linear-gradient(135deg,#050403,#0b0906 55%,#141006);}
+.sidebar,.topbar{background:rgba(11,9,6,.94)!important;backdrop-filter:blur(14px);}
+.logo{position:relative}.logo::before{content:"حافلات مكة";display:block;font-size:15px;font-weight:800;color:#f7d774;margin-bottom:4px}.logo-title{color:#fff8df}.logo-ver{color:#d4af37!important}.user-av{background:linear-gradient(135deg,#d4af37,#8a6b15)!important;color:#050403!important}.nav-item.active{color:#f7d774!important;border-right-color:#d4af37!important;background:rgba(212,175,55,.10)!important}.nav-item:hover{background:rgba(212,175,55,.07)!important}.kpi-card,.kpi,.sc,.emp-card,.top-card,.tc,.activity{background:linear-gradient(180deg,rgba(23,18,10,.96),rgba(11,9,6,.88))!important;border-color:rgba(212,175,55,.18)!important;box-shadow:0 12px 34px rgba(0,0,0,.22),inset 0 1px 0 rgba(247,215,116,.05)}.kpi-card:hover,.kpi:hover,.sc:hover,.top-card:hover,.tc:hover{border-color:rgba(247,215,116,.36)!important}.upload-zone{background:rgba(212,175,55,.04)!important;border-color:rgba(212,175,55,.24)!important}.upload-zone:hover{background:rgba(212,175,55,.08)!important;border-color:#d4af37!important}.upload-btn,.add-btn,.go-btn,.fbtn.on,.dfbtn.on,.stab.active{background:#d4af37!important;border-color:#d4af37!important;color:#050403!important}.page-title,.sc-title{color:#fff8df}.badge-live,.badge{background:rgba(212,175,55,.10)!important;border-color:rgba(212,175,55,.28)!important;color:#f7d774!important}.badge-live::before{background:#d4af37!important}table th,.dt th,.data-table th{background:#141006!important;color:#c9b77a!important}::-webkit-scrollbar-thumb{background:rgba(212,175,55,.34)!important}
+
 </style>
 </head>
 <body>
@@ -371,6 +376,14 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
           <span class="fmt-tag">.xlsx</span>
           <span class="fmt-tag">.xls</span>
           <span class="fmt-tag">SN · Date · ID · Name · Job Title · Attendance Note</span>
+        </div>
+      </div>
+
+      <div class="upload-status show" id="remoteSourceStatus" style="border-color:rgba(212,175,55,.22);background:rgba(212,175,55,.06);">
+        <div class="status-icon" id="remoteSourceIcon">🔗</div>
+        <div class="status-text">
+          <strong id="remoteSourceTitle">ملف الحضور مربوط عبر SharePoint</strong>
+          <span id="remoteSourceSub">يتم تحديث البيانات تلقائياً عند فتح الصفحة. وفي حال تعذر الاتصال استخدم الرفع اليدوي كخطة بديلة.</span>
         </div>
       </div>
 
@@ -770,6 +783,64 @@ dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('drag');
 dz.addEventListener('dragleave', ()=>dz.classList.remove('drag'));
 dz.addEventListener('drop', e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0]);});
 
+const ATTENDANCE_FILE_URL = 'https://mbconesma-my.sharepoint.com/:x:/g/personal/m_abdulhalim_mbco_sa/IQBEF3vtHQ1QRJ4w7wBPLSyrAeWyCq1T4f46_Ud8Md6pSdA?e=A7FTJv&download=1';
+
+function parseAttendanceWorkbook(buffer, sourceName) {
+  const wb = XLSX.read(buffer, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+
+  const data = [];
+  for (let i=1;i<rows.length;i++) {
+    const r = rows[i];
+    if (!r || r.length < 5) continue;
+    data.push({
+      sn: r[0], date: r[1], id: r[2],
+      name: r[3], jobTitle: r[4], note: r[5]||''
+    });
+  }
+
+  if (data.length === 0) throw new Error('الملف فارغ أو التنسيق غير صحيح');
+
+  attendanceData = data;
+  document.getElementById('statusIcon').textContent = '✅';
+  document.getElementById('statusTitle').textContent = `تم تحميل ملف الحضور — ${data.length} سجل`;
+  document.getElementById('statusSub').textContent = `${sourceName} · ${new Date().toLocaleTimeString('en-SA')}`;
+  document.getElementById('lastUploadBadge').style.display='block';
+  document.getElementById('lastUploadBadge').textContent = `آخر تحديث: ${sourceName}`;
+  processData();
+}
+
+async function loadRemoteAttendance() {
+  const st = document.getElementById('uploadStatus');
+  st.className = 'upload-status show';
+  document.getElementById('statusIcon').textContent = '⏳';
+  document.getElementById('statusTitle').textContent = 'جاري تحميل ملف الحضور من SharePoint...';
+  document.getElementById('statusSub').textContent = 'Attendance source linked';
+  try {
+    const res = await fetch(ATTENDANCE_FILE_URL, {cache:'no-store'});
+    if (!res.ok) throw new Error('تعذر الوصول للملف: ' + res.status);
+    const buffer = await res.arrayBuffer();
+    parseAttendanceWorkbook(buffer, 'SharePoint Attendance File');
+    const rs = document.getElementById('remoteSourceStatus');
+    if (rs) {
+      document.getElementById('remoteSourceIcon').textContent = '✅';
+      document.getElementById('remoteSourceTitle').textContent = 'تم الربط مع ملف الحضور بنجاح';
+      document.getElementById('remoteSourceSub').textContent = 'أي تعديل تحفظه على Excel سيظهر عند تحديث الصفحة.';
+    }
+  } catch(err) {
+    document.getElementById('statusIcon').textContent = '⚠️';
+    document.getElementById('statusTitle').textContent = 'لم يتم تحميل ملف SharePoint تلقائياً';
+    document.getElementById('statusSub').textContent = err.message + ' — استخدم الرفع اليدوي أو تأكد أن الرابط يسمح بالمشاهدة والتحميل.';
+    const rs = document.getElementById('remoteSourceStatus');
+    if (rs) {
+      document.getElementById('remoteSourceIcon').textContent = '⚠️';
+      document.getElementById('remoteSourceTitle').textContent = 'الربط يحتاج تحقق من صلاحية الرابط';
+      document.getElementById('remoteSourceSub').textContent = 'اختر View & Download من إعدادات المشاركة، ثم ارفع الصفحة على GitHub Pages.';
+    }
+  }
+}
+
 function handleFile(file) {
   if (!file) return;
   const st = document.getElementById('uploadStatus');
@@ -781,31 +852,7 @@ function handleFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb = XLSX.read(e.target.result, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
-
-      // skip header row
-      const data = [];
-      for (let i=1;i<rows.length;i++) {
-        const r = rows[i];
-        if (!r || r.length < 5) continue;
-        data.push({
-          sn: r[0], date: r[1], id: r[2],
-          name: r[3], jobTitle: r[4], note: r[5]||''
-        });
-      }
-
-      if (data.length === 0) throw new Error('الملف فارغ أو التنسيق غير صحيح');
-
-      attendanceData = data;
-      document.getElementById('statusIcon').textContent = '✅';
-      document.getElementById('statusTitle').textContent = `تم رفع الملف بنجاح — ${data.length} سجل`;
-      document.getElementById('statusSub').textContent = `${file.name} · ${new Date().toLocaleTimeString('en-SA')}`;
-      document.getElementById('lastUploadBadge').style.display='block';
-      document.getElementById('lastUploadBadge').textContent = `آخر رفع: ${file.name}`;
-
-      processData();
+      parseAttendanceWorkbook(e.target.result, file.name);
     } catch(err) {
       document.getElementById('statusIcon').textContent = '❌';
       document.getElementById('statusTitle').textContent = 'خطأ في قراءة الملف';
@@ -825,6 +872,7 @@ function processData() {
   D.forEach(r => { const k = getNoteClass(r.note); counts[k]=(counts[k]||0)+1; });
 
   document.getElementById('k-absent').textContent = counts.absent;
+  try { window.parent.postMessage({type:'attendanceStats', total:D.length, absent:counts.absent, late:counts.late, source:'attendance'}, '*'); } catch(e) {}
   document.getElementById('k-late').textContent = counts.late;
   document.getElementById('k-leave').textContent = counts.leave;
   document.getElementById('k-annual').textContent = counts.annual;
@@ -1017,7 +1065,7 @@ function renderStaff() {
       <td style="font-size:11px;color:var(--text2);">${s.position}</td>
       <td>${teamTag(getTeamKey(s.team))}</td>
       <td>${badge}</td>
-      <td><button style="background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.2);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(79,124,255,.18)'" onmouseout="this.style.background='rgba(79,124,255,.08)'" onclick="openProfileModal(${s.id})">◉ الملف</button></td>
+      <td><button style="background:rgba(212,175,55,.10);border:1px solid rgba(212,175,55,.22);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(79,124,255,.18)'" onmouseout="this.style.background='rgba(212,175,55,.10)'" onclick="openProfileModal(${s.id})">◉ الملف</button></td>
     </tr>`;
   }).join('');
 }
@@ -1334,6 +1382,9 @@ function confirmWarn() {
   alert(msg);
   document.getElementById('warnOverlay').classList.remove('open');
 }
+window.addEventListener('DOMContentLoaded', () => {
+  loadRemoteAttendance();
+});
 </script>
 </body>
 </html>
