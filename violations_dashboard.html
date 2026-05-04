@@ -9,12 +9,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0a0e1a;--bg2:#0f1525;--bg3:#141b2d;--card:#1a2235;
-  --border:rgba(99,130,255,.12);--border2:rgba(99,130,255,.25);
-  --accent:#4f7cff;--accent2:#7c5cfc;
-  --green:#22d3a5;--amber:#f59e0b;--red:#f43f5e;--blue:#38bdf8;--purple:#a78bfa;
-  --text:#e8eaf0;--text2:#8892aa;--text3:#5a6580;
-  --r:12px;
+  --bg:#050403;--bg2:#0b0906;--bg3:#141006;--card:#17120a;--card2:#211807;
+  --border:rgba(212,175,55,.14);--border2:rgba(212,175,55,.30);--border3:rgba(212,175,55,.50);
+  --accent:#d4af37;--accent2:#f7d774;--accent3:#b8860b;
+  --green:#22d3a5;--amber:#d4af37;--red:#f43f5e;--blue:#d4af37;--purple:#c8a84c;
+  --text:#fff8df;--text2:#c9b77a;--text3:#7d6a33;
+  --gold:#d4af37;--gold2:#f7d774;--gold3:#8a6b15;--black:#050403;
+  --sb-w:86px;--r:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
@@ -25,8 +26,8 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .logo-ver{font-size:9px;color:var(--amber);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
 .nav{padding:14px 0;flex:1;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border-right:2px solid transparent;}
-.nav-item:hover{background:rgba(79,124,255,.06);color:var(--text);}
-.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(79,124,255,.08);}
+.nav-item:hover{background:rgba(212,175,55,.07);color:var(--text);}
+.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(212,175,55,.10);}
 .sidebar-user{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 .user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
 .main{margin-right:220px;min-height:100vh;}
@@ -77,7 +78,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .dt th{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);}
 .dt td{padding:9px 12px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .dt tr:last-child td{border-bottom:none;}
-.dt tr:hover td{background:rgba(79,124,255,.03);}
+.dt tr:hover td{background:rgba(212,175,55,.04);}
 .mono{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
 
 /* Target badge */
@@ -96,7 +97,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 
 /* Bus badge */
 .bb{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;font-family:monospace;}
-.bb.ms{background:rgba(79,124,255,.12);color:var(--accent);}
+.bb.ms{background:rgba(212,175,55,.14);color:var(--accent);}
 .bb.ma{background:rgba(34,211,165,.12);color:var(--green);}
 
 /* Bars */
@@ -109,10 +110,10 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .tc{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:13px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:all .2s;}
 .tc:hover{border-color:var(--border2);}
 .rk{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
-.rk1{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;}
+.rk1{background:linear-gradient(135deg,#d4af37,#f97316);color:#fff;}
 .rk2{background:rgba(148,163,184,.2);color:#94a3b8;}
 .rk3{background:rgba(180,120,60,.2);color:#b47c3c;}
-.rkn{background:rgba(79,124,255,.1);color:var(--accent);}
+.rkn{background:rgba(212,175,55,.12);color:var(--accent);}
 
 /* Filters */
 .frow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
@@ -143,6 +144,13 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 @media(max-width:900px){.sidebar{display:none;}.main{margin-right:0;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.two-col,.three-col{grid-template-columns:1fr;}}
+
+
+/* Premium black & gold overlay */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 16% 5%,rgba(212,175,55,.13),transparent 28%),linear-gradient(135deg,#050403,#0b0906 55%,#141006);}
+.sidebar,.topbar{background:rgba(11,9,6,.94)!important;backdrop-filter:blur(14px);}
+.logo{position:relative}.logo::before{content:"حافلات مكة";display:block;font-size:15px;font-weight:800;color:#f7d774;margin-bottom:4px}.logo-title{color:#fff8df}.logo-ver{color:#d4af37!important}.user-av{background:linear-gradient(135deg,#d4af37,#8a6b15)!important;color:#050403!important}.nav-item.active{color:#f7d774!important;border-right-color:#d4af37!important;background:rgba(212,175,55,.10)!important}.nav-item:hover{background:rgba(212,175,55,.07)!important}.kpi-card,.kpi,.sc,.emp-card,.top-card,.tc,.activity{background:linear-gradient(180deg,rgba(23,18,10,.96),rgba(11,9,6,.88))!important;border-color:rgba(212,175,55,.18)!important;box-shadow:0 12px 34px rgba(0,0,0,.22),inset 0 1px 0 rgba(247,215,116,.05)}.kpi-card:hover,.kpi:hover,.sc:hover,.top-card:hover,.tc:hover{border-color:rgba(247,215,116,.36)!important}.upload-zone{background:rgba(212,175,55,.04)!important;border-color:rgba(212,175,55,.24)!important}.upload-zone:hover{background:rgba(212,175,55,.08)!important;border-color:#d4af37!important}.upload-btn,.add-btn,.go-btn,.fbtn.on,.dfbtn.on,.stab.active{background:#d4af37!important;border-color:#d4af37!important;color:#050403!important}.page-title,.sc-title{color:#fff8df}.badge-live,.badge{background:rgba(212,175,55,.10)!important;border-color:rgba(212,175,55,.28)!important;color:#f7d774!important}.badge-live::before{background:#d4af37!important}table th,.dt th,.data-table th{background:#141006!important;color:#c9b77a!important}::-webkit-scrollbar-thumb{background:rgba(212,175,55,.34)!important}
+
 </style>
 </head>
 <body>
@@ -394,41 +402,62 @@ function nav(page, el){
   if(page==='routes'&&DATA.length) renderRoutes();
 }
 
-// ── Upload ──
+// ── Linked SharePoint source + manual fallback ──
+const VIOLATIONS_DATA_URL = 'https://mbconesma-my.sharepoint.com/:x:/g/personal/m_abdulhalim_mbco_sa/IQCTmOcqe0TlTZSAHxqhcBA7AeZQJ6td3rIfA4ZkmmpyQuM?e=a691Z1&download=1';
+
+function parseWorkbook(buffer){
+  const wb = XLSX.read(buffer,{type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws,{header:1});
+  const data = [];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||r.length<9) continue;
+    data.push({
+      sr:r[0],id:r[1],name:String(r[2]||'').trim(),
+      date:r[3],time:r[4],vtype:String(r[5]||'').trim(),
+      busType:String(r[6]||'').trim(),busNo:r[7],route:r[8],violNo:r[9]||''
+    });
+  }
+  if(!data.length) throw new Error('الملف فارغ أو التنسيق غير صحيح');
+  return data;
+}
+
+function applyData(data, sourceName='SharePoint'){
+  DATA=data;
+  showStat('✅',`تم الربط — ${data.length} مخالفة`,sourceName);
+  document.getElementById('fileLabel').textContent='مرتبط تلقائيًا من SharePoint';
+  if(window.parent && window.parent !== window){
+    window.parent.postMessage({type:'violationsStats', total:data.length}, '*');
+  }
+  buildAll();
+}
+
+async function loadLinkedData(){
+  showStat('🔄','جاري تحميل ملف المخالفات من SharePoint...','Auto Linked Source');
+  try{
+    const res=await fetch(VIOLATIONS_DATA_URL,{cache:'no-store'});
+    if(!res.ok) throw new Error('تعذر تحميل الملف: '+res.status);
+    const buffer=await res.arrayBuffer();
+    applyData(parseWorkbook(buffer),'SharePoint — ملف المخالفات');
+  }catch(err){
+    showStat('⚠️','تعذر التحميل التلقائي — استخدم الرفع اليدوي',err.message);
+  }
+}
+
 document.getElementById('fInput').addEventListener('change', function() {
   const file = this.files[0];
   if(!file) return;
   showStat('⏳','جاري قراءة الملف...',file.name);
   const reader = new FileReader();
   reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(e.target.result,{type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws,{header:1});
-      const data = [];
-      for(let i=1;i<rows.length;i++){
-        const r=rows[i];
-        if(!r||r.length<9) continue;
-        data.push({
-          sr:r[0],id:r[1],name:String(r[2]||'').trim(),
-          date:r[3],time:r[4],
-          vtype:String(r[5]||'').trim(),
-          busType:String(r[6]||'').trim(),
-          busNo:r[7],route:r[8],
-          violNo:r[9]||''
-        });
-      }
-      if(!data.length) throw new Error('الملف فارغ أو التنسيق غير صحيح');
-      DATA=data;
-      showStat('✅',`تم الرفع — ${data.length} مخالفة`,file.name);
-      document.getElementById('fileLabel').textContent=file.name;
-      buildAll();
-    } catch(err) {
-      showStat('❌','خطأ في قراءة الملف',err.message);
-    }
+    try { applyData(parseWorkbook(e.target.result), file.name); }
+    catch(err) { showStat('❌','خطأ في قراءة الملف',err.message); }
   };
   reader.readAsArrayBuffer(file);
 });
+
+document.addEventListener('DOMContentLoaded', loadLinkedData);
 
 function showStat(icon,title,sub){
   const bar=document.getElementById('upStat');
@@ -513,8 +542,8 @@ function buildAll(){
     type:'doughnut',
     data:{labels:typeLabels,datasets:[{data:typeData,backgroundColor:typeColors,borderColor:typeColors.map(c=>c.replace('.8)','.9)')),borderWidth:2,hoverOffset:6}]},
     options:{responsive:true,maintainAspectRatio:true,cutout:'60%',
-      plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,color:'#8892aa',font:{size:11}}},
-        tooltip:{backgroundColor:'#1a2235',borderColor:'rgba(99,130,255,.25)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#8892aa',
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,color:'#c9b77a',font:{size:11}}},
+        tooltip:{backgroundColor:'#17120a',borderColor:'rgba(212,175,55,.30)',borderWidth:1,titleColor:'#fff8df',bodyColor:'#c9b77a',
           callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);const p=t>0?((ctx.raw/t)*100).toFixed(1):'0';return ` ${ctx.label}: ${ctx.raw} (${p}%)`;}}
         }
       }
@@ -531,15 +560,15 @@ function buildAll(){
     data:{
       labels:last10.map(([dk])=>dateStr(Number(dk))),
       datasets:[{label:'المخالفات اليومية',data:last10.map(([,v])=>v),
-        borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',fill:true,tension:.4,
-        pointBackgroundColor:'#f59e0b',pointRadius:4,pointHoverRadius:6,borderWidth:2}]
+        borderColor:'#d4af37',backgroundColor:'rgba(245,158,11,.1)',fill:true,tension:.4,
+        pointBackgroundColor:'#d4af37',pointRadius:4,pointHoverRadius:6,borderWidth:2}]
     },
     options:{responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{labels:{color:'#8892aa',boxWidth:10}},
-        tooltip:{backgroundColor:'#1a2235',borderColor:'rgba(99,130,255,.25)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#8892aa'}},
+      plugins:{legend:{labels:{color:'#c9b77a',boxWidth:10}},
+        tooltip:{backgroundColor:'#17120a',borderColor:'rgba(212,175,55,.30)',borderWidth:1,titleColor:'#fff8df',bodyColor:'#c9b77a'}},
       scales:{
-        x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580',maxRotation:30}},
-        y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}
+        x:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33',maxRotation:30}},
+        y:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33'},beginAtZero:true}
       }
     }
   });
@@ -690,13 +719,13 @@ function renderRoutes(){
   chartRoutes=new Chart(document.getElementById('chartRoutes'),{
     type:'bar',
     data:{labels,datasets:[{label:'عدد المخالفات',data:counts,
-      backgroundColor:'rgba(245,158,11,.7)',borderColor:'#f59e0b',borderWidth:1,borderRadius:6,borderSkipped:false}]},
+      backgroundColor:'rgba(245,158,11,.7)',borderColor:'#d4af37',borderWidth:1,borderRadius:6,borderSkipped:false}]},
     options:{responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{labels:{color:'#8892aa',boxWidth:10}},
-        tooltip:{backgroundColor:'#1a2235',borderColor:'rgba(99,130,255,.25)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#8892aa'}},
+      plugins:{legend:{labels:{color:'#c9b77a',boxWidth:10}},
+        tooltip:{backgroundColor:'#17120a',borderColor:'rgba(212,175,55,.30)',borderWidth:1,titleColor:'#fff8df',bodyColor:'#c9b77a'}},
       scales:{
-        x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'}},
-        y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}
+        x:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33'}},
+        y:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33'},beginAtZero:true}
       }
     }
   });
