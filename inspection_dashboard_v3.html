@@ -9,13 +9,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0a0e1a;--bg2:#0f1525;--bg3:#141b2d;
-  --card:#1a2235;--border:rgba(99,130,255,.12);--border2:rgba(99,130,255,.25);
-  --accent:#4f7cff;--accent2:#7c5cfc;
-  --green:#22d3a5;--amber:#f59e0b;--red:#f43f5e;--blue:#38bdf8;--purple:#a78bfa;
-  --text:#e8eaf0;--text2:#8892aa;--text3:#5a6580;
-  --ms:#4f7cff;--ma:#22d3a5;
-  --r:12px;
+  --bg:#050403;--bg2:#0b0906;--bg3:#141006;--card:#17120a;--card2:#211807;
+  --border:rgba(212,175,55,.14);--border2:rgba(212,175,55,.30);--border3:rgba(212,175,55,.50);
+  --accent:#d4af37;--accent2:#f7d774;--accent3:#b8860b;
+  --green:#22d3a5;--amber:#d4af37;--red:#f43f5e;--blue:#d4af37;--purple:#c8a84c;
+  --text:#fff8df;--text2:#c9b77a;--text3:#7d6a33;
+  --gold:#d4af37;--gold2:#f7d774;--gold3:#8a6b15;--black:#050403;
+  --sb-w:86px;--r:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
@@ -28,8 +28,8 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .logo-ver{font-size:9px;color:var(--green);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
 .nav{padding:14px 0;flex:1;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border-right:2px solid transparent;}
-.nav-item:hover{background:rgba(79,124,255,.06);color:var(--text);}
-.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(79,124,255,.08);}
+.nav-item:hover{background:rgba(212,175,55,.07);color:var(--text);}
+.nav-item.active{color:var(--accent);border-right-color:var(--accent);background:rgba(212,175,55,.10);}
 .sidebar-user{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 .user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
 
@@ -44,8 +44,8 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .page{display:none;}.page.active{display:block;}
 
 /* ── Upload ── */
-.upload-zone{border:2px dashed var(--border2);border-radius:16px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:20px;background:rgba(79,124,255,.03);}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(79,124,255,.07);}
+.upload-zone{border:2px dashed var(--border2);border-radius:16px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:20px;background:rgba(212,175,55,.04);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(212,175,55,.09);}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .upload-status{display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;align-items:center;gap:10px;font-size:12px;}
 .upload-status.show{display:flex;}
@@ -82,12 +82,12 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .dt th{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);background:var(--bg3);}
 .dt td{padding:9px 12px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
 .dt tr:last-child td{border-bottom:none;}
-.dt tr:hover td{background:rgba(79,124,255,.03);}
+.dt tr:hover td{background:rgba(212,175,55,.04);}
 .mono{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
 
 /* ── Bus type badge ── */
 .bus-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
-.bus-badge.ms{background:rgba(79,124,255,.12);color:var(--ms);}
+.bus-badge.ms{background:rgba(212,175,55,.14);color:var(--ms);}
 .bus-badge.ma{background:rgba(34,211,165,.12);color:var(--ma);}
 
 /* ── Evasion badge ── */
@@ -101,10 +101,10 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .top-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:all .2s;cursor:default;}
 .top-card:hover{border-color:var(--border2);}
 .rank-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
-.rank-1{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;}
+.rank-1{background:linear-gradient(135deg,#d4af37,#f97316);color:#fff;}
 .rank-2{background:rgba(148,163,184,.2);color:#94a3b8;}
 .rank-3{background:rgba(180,120,60,.2);color:#b47c3c;}
-.rank-n{background:rgba(79,124,255,.1);color:var(--accent);}
+.rank-n{background:rgba(212,175,55,.12);color:var(--accent);}
 .top-info{flex:1;}
 .top-name{font-size:13px;font-weight:600;}
 .top-id{font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
@@ -129,8 +129,8 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
   display:flex;flex-direction:column;align-items:center;gap:2px;
 }
 .slicer-item:hover{border-color:var(--border2);color:var(--text);background:var(--card);}
-.slicer-item.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(79,124,255,.3);}
-.slicer-item.all-item{background:rgba(79,124,255,.08);border-color:rgba(79,124,255,.2);color:var(--accent);}
+.slicer-item.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(212,175,55,.32);}
+.slicer-item.all-item{background:rgba(212,175,55,.10);border-color:rgba(212,175,55,.22);color:var(--accent);}
 .slicer-item.all-item.active{background:var(--accent);color:#fff;}
 .slicer-date{font-size:13px;font-weight:700;}
 .slicer-count{font-size:10px;opacity:.75;}
@@ -164,6 +164,13 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
 @media(max-width:900px){.sidebar{display:none;}.main{margin-right:0;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.two-col,.three-col{grid-template-columns:1fr;}}
+
+
+/* Premium black & gold overlay */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 16% 5%,rgba(212,175,55,.13),transparent 28%),linear-gradient(135deg,#050403,#0b0906 55%,#141006);}
+.sidebar,.topbar{background:rgba(11,9,6,.94)!important;backdrop-filter:blur(14px);}
+.logo{position:relative}.logo::before{content:"حافلات مكة";display:block;font-size:15px;font-weight:800;color:#f7d774;margin-bottom:4px}.logo-title{color:#fff8df}.logo-ver{color:#d4af37!important}.user-av{background:linear-gradient(135deg,#d4af37,#8a6b15)!important;color:#050403!important}.nav-item.active{color:#f7d774!important;border-right-color:#d4af37!important;background:rgba(212,175,55,.10)!important}.nav-item:hover{background:rgba(212,175,55,.07)!important}.kpi-card,.kpi,.sc,.emp-card,.top-card,.tc,.activity{background:linear-gradient(180deg,rgba(23,18,10,.96),rgba(11,9,6,.88))!important;border-color:rgba(212,175,55,.18)!important;box-shadow:0 12px 34px rgba(0,0,0,.22),inset 0 1px 0 rgba(247,215,116,.05)}.kpi-card:hover,.kpi:hover,.sc:hover,.top-card:hover,.tc:hover{border-color:rgba(247,215,116,.36)!important}.upload-zone{background:rgba(212,175,55,.04)!important;border-color:rgba(212,175,55,.24)!important}.upload-zone:hover{background:rgba(212,175,55,.08)!important;border-color:#d4af37!important}.upload-btn,.add-btn,.go-btn,.fbtn.on,.dfbtn.on,.stab.active{background:#d4af37!important;border-color:#d4af37!important;color:#050403!important}.page-title,.sc-title{color:#fff8df}.badge-live,.badge{background:rgba(212,175,55,.10)!important;border-color:rgba(212,175,55,.28)!important;color:#f7d774!important}.badge-live::before{background:#d4af37!important}table th,.dt th,.data-table th{background:#141006!important;color:#c9b77a!important}::-webkit-scrollbar-thumb{background:rgba(212,175,55,.34)!important}
+
 </style>
 </head>
 <body>
@@ -281,8 +288,8 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
         <div style="font-size:15px;font-weight:600;margin-bottom:4px;">ارفع ملف فحص الحافلات</div>
         <div style="font-size:12px;color:var(--text3);">اسحب الملف هنا أو اضغط للاختيار</div>
         <div style="margin-top:10px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
-          <span style="background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;">.xlsx</span>
-          <span style="background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;">SN · Date · Email · Name · ID · Bus Type · Bus No · Route · Valid · No Tickets · Total</span>
+          <span style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.22);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;">.xlsx</span>
+          <span style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.22);color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;">SN · Date · Email · Name · ID · Bus Type · Bus No · Route · Valid · No Tickets · Total</span>
         </div>
       </div>
       <div class="upload-status" id="uploadStatus">
@@ -455,11 +462,58 @@ function showPage(p){
   if(p==='evasion') renderEvasion();
 }
 
-// ── File Upload ──
+// ── Linked Excel Source + Manual Upload Fallback ──
+const INSPECTION_FILE_URL = 'https://mbconesma-my.sharepoint.com/:x:/g/personal/m_abdulhalim_mbco_sa/IQC79Qh7IkXqQqk8wJirz14HAQPQhEkEcVZeI8b69E76Ccg?e=1Re6Tu&download=1';
 const dz=document.getElementById('dropZone');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
 dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0]);});
+
+function parseInspectionWorkbook(arrayBuffer, sourceName='ملف فحص الحافلات المرتبط'){
+  const wb=XLSX.read(arrayBuffer,{type:'array'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+  const data=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||r.length<10) continue;
+    const noT=Number(r[9])||0;
+    const total=Number(r[10])||0;
+    const valid=Number(r[8])||0;
+    data.push({
+      sn:r[0],date:r[1],email:r[2],name:r[3],
+      id:r[4],busType:r[5],busNo:r[6],route:r[7],
+      valid,noTickets:noT,total,
+      evasionRate: total>0?noT/total:0
+    });
+  }
+  if(!data.length) throw new Error('الملف فارغ أو التنسيق غير صحيح');
+  inspData=data;
+  document.getElementById('statusIcon').textContent='✅';
+  document.getElementById('statusTitle').textContent=`تم تحميل ملف الفحص — ${data.length} سجل`;
+  document.getElementById('statusSub').textContent=`${sourceName} · ${new Date().toLocaleTimeString('en-SA')}`;
+  document.getElementById('lastFile').style.display='block';
+  document.getElementById('lastFile').textContent=sourceName;
+  processData();
+}
+
+async function loadLinkedInspectionFile(){
+  const st=document.getElementById('uploadStatus');
+  st.className='upload-status show';
+  document.getElementById('statusIcon').textContent='⏳';
+  document.getElementById('statusTitle').textContent='جاري تحميل ملف فحص الحافلات المرتبط...';
+  document.getElementById('statusSub').textContent='SharePoint / OneDrive';
+  try{
+    const res=await fetch(INSPECTION_FILE_URL,{cache:'no-store'});
+    if(!res.ok) throw new Error('تعذر تحميل الملف المرتبط. تأكد أن المشاركة View & Download.');
+    const buf=await res.arrayBuffer();
+    parseInspectionWorkbook(buf,'ملف فحص الحافلات المرتبط');
+  }catch(err){
+    document.getElementById('statusIcon').textContent='⚠️';
+    document.getElementById('statusTitle').textContent='تعذر تحميل ملف الفحص تلقائيًا';
+    document.getElementById('statusSub').textContent=err.message + ' — مازال بإمكانك رفع الملف يدويًا من هنا.';
+  }
+}
 
 function handleFile(file){
   if(!file) return;
@@ -471,31 +525,7 @@ function handleFile(file){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
-      const wb=XLSX.read(e.target.result,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
-      const data=[];
-      for(let i=1;i<rows.length;i++){
-        const r=rows[i];
-        if(!r||r.length<10) continue;
-        const noT=Number(r[9])||0;
-        const total=Number(r[10])||0;
-        const valid=Number(r[8])||0;
-        data.push({
-          sn:r[0],date:r[1],email:r[2],name:r[3],
-          id:r[4],busType:r[5],busNo:r[6],route:r[7],
-          valid,noTickets:noT,total,
-          evasionRate: total>0?noT/total:0
-        });
-      }
-      if(!data.length) throw new Error('الملف فارغ أو التنسيق غير صحيح');
-      inspData=data;
-      document.getElementById('statusIcon').textContent='✅';
-      document.getElementById('statusTitle').textContent=`تم رفع الملف — ${data.length} سجل فحص`;
-      document.getElementById('statusSub').textContent=`${file.name} · ${new Date().toLocaleTimeString('en-SA')}`;
-      document.getElementById('lastFile').style.display='block';
-      document.getElementById('lastFile').textContent=file.name;
-      processData();
+      parseInspectionWorkbook(e.target.result,file.name);
     }catch(err){
       document.getElementById('statusIcon').textContent='❌';
       document.getElementById('statusTitle').textContent='خطأ في قراءة الملف';
@@ -504,6 +534,8 @@ function handleFile(file){
   };
   reader.readAsArrayBuffer(file);
 }
+
+window.addEventListener('DOMContentLoaded', loadLinkedInspectionFile);
 
 // ── Process ──
 function processData(){
@@ -520,6 +552,7 @@ function processData(){
   document.getElementById('k-noticket').textContent=totalNoTix.toLocaleString();
   document.getElementById('k-evasion').textContent=evasionRate;
   document.getElementById('k-emp').textContent=uniqueEmps;
+  try { window.parent.postMessage({type:'inspectionStats', total:totalInsp, valid:totalValid, noTickets:totalNoTix, passengers:totalPassengers, source:'inspection'}, '*'); } catch(e) {}
 
   // Summary strip
   const dates=[...new Set(D.map(r=>r.date))];
@@ -527,7 +560,7 @@ function processData(){
   const maCount=D.filter(r=>(r.busType||'').toUpperCase()==='MA').length;
   document.getElementById('sumStrip').innerHTML=`
     <div class="sum-chip" style="background:rgba(255,255,255,.05);border:1px solid var(--border);">📅 ${dates.length} يوم</div>
-    <div class="sum-chip" style="background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);color:var(--ms);">MS: ${msCount} فحص</div>
+    <div class="sum-chip" style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.22);color:var(--ms);">MS: ${msCount} فحص</div>
     <div class="sum-chip" style="background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.2);color:var(--ma);">MA: ${maCount} فحص</div>
     <div class="sum-chip" style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.2);color:var(--red);">⚠ ${totalNoTix} بدون تذكرة</div>
   `;
@@ -543,7 +576,7 @@ function processData(){
   const maxT=Math.max(D.filter(r=>(r.busType||'').toUpperCase()==='MS').length, D.filter(r=>(r.busType||'').toUpperCase()==='MA').length,1);
   document.getElementById('busTypeBreakdown').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-      <div style="background:var(--bg3);border:1px solid rgba(79,124,255,.2);border-radius:10px;padding:14px;text-align:center;">
+      <div style="background:var(--bg3);border:1px solid rgba(212,175,55,.22);border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">MS — Standard Bus</div>
         <div style="font-size:22px;font-weight:700;color:var(--ms);font-family:'IBM Plex Mono',monospace;">${msCount}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:4px;">فحص · ${msTotal} راكب · ${msNoTix} بدون تذكرة</div>
@@ -645,10 +678,10 @@ function buildCharts(D) {
         {
           label:'عدد الفحوصات',
           data: lineCnt,
-          borderColor:'#4f7cff',
-          backgroundColor:'rgba(79,124,255,.12)',
+          borderColor:'#d4af37',
+          backgroundColor:'rgba(212,175,55,.14)',
           fill:true, tension:.4,
-          pointBackgroundColor:'#4f7cff',
+          pointBackgroundColor:'#d4af37',
           pointRadius:4, pointHoverRadius:6,
           borderWidth:2,
         },
@@ -668,19 +701,19 @@ function buildCharts(D) {
       responsive:true, maintainAspectRatio:true,
       interaction:{mode:'index',intersect:false},
       plugins:{
-        legend:{position:'top',labels:{boxWidth:10,padding:14,color:'#8892aa'}},
+        legend:{position:'top',labels:{boxWidth:10,padding:14,color:'#c9b77a'}},
         tooltip:{
-          backgroundColor:'#1a2235',
-          borderColor:'rgba(99,130,255,.25)',
+          backgroundColor:'#17120a',
+          borderColor:'rgba(212,175,55,.30)',
           borderWidth:1,
-          titleColor:'#e8eaf0',
-          bodyColor:'#8892aa',
+          titleColor:'#fff8df',
+          bodyColor:'#c9b77a',
           padding:10,
         }
       },
       scales:{
-        x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580',maxRotation:30}},
-        y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}
+        x:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33',maxRotation:30}},
+        y:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33'},beginAtZero:true}
       }
     }
   });
@@ -705,13 +738,13 @@ function buildCharts(D) {
       responsive:true, maintainAspectRatio:true,
       cutout:'65%',
       plugins:{
-        legend:{position:'bottom',labels:{boxWidth:10,padding:12,color:'#8892aa'}},
+        legend:{position:'bottom',labels:{boxWidth:10,padding:12,color:'#c9b77a'}},
         tooltip:{
-          backgroundColor:'#1a2235',
-          borderColor:'rgba(99,130,255,.25)',
+          backgroundColor:'#17120a',
+          borderColor:'rgba(212,175,55,.30)',
           borderWidth:1,
-          titleColor:'#e8eaf0',
-          bodyColor:'#8892aa',
+          titleColor:'#fff8df',
+          bodyColor:'#c9b77a',
           callbacks:{
             label:ctx=>{
               const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
@@ -746,7 +779,7 @@ function buildCharts(D) {
           label:'عدد الفحوصات',
           data: routeCnt,
           backgroundColor:'rgba(79,124,255,.7)',
-          borderColor:'#4f7cff',
+          borderColor:'#d4af37',
           borderWidth:1,
           borderRadius:6,
           borderSkipped:false,
@@ -766,19 +799,19 @@ function buildCharts(D) {
       responsive:true, maintainAspectRatio:true,
       interaction:{mode:'index',intersect:false},
       plugins:{
-        legend:{position:'top',labels:{boxWidth:10,padding:14,color:'#8892aa'}},
+        legend:{position:'top',labels:{boxWidth:10,padding:14,color:'#c9b77a'}},
         tooltip:{
-          backgroundColor:'#1a2235',
-          borderColor:'rgba(99,130,255,.25)',
+          backgroundColor:'#17120a',
+          borderColor:'rgba(212,175,55,.30)',
           borderWidth:1,
-          titleColor:'#e8eaf0',
-          bodyColor:'#8892aa',
+          titleColor:'#fff8df',
+          bodyColor:'#c9b77a',
           padding:10,
         }
       },
       scales:{
-        x:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'}},
-        y:{grid:{color:'rgba(99,130,255,.06)'},ticks:{color:'#5a6580'},beginAtZero:true}
+        x:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33'}},
+        y:{grid:{color:'rgba(212,175,55,.07)'},ticks:{color:'#7d6a33'},beginAtZero:true}
       }
     }
   });
